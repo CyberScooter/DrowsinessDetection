@@ -1,0 +1,10 @@
+/client/node_modules
+/rest-api-server/node_modules
+/rest-api-server/build
+/rest-api-server/.env
+app.conf
+docker-compose.production copy.yml
+docker-compose.production.yml
+init-letsencrypt.sh
+data
+/client/nginx

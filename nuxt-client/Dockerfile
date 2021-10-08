@@ -1,0 +1,29 @@
+FROM node:14-alpine
+WORKDIR "/usr/src/app"
+COPY package.json .
+RUN npm install
+COPY . .
+RUN npm run build
+
+EXPOSE 3000
+
+# set app serving to permissive / assigned
+ENV NUXT_HOST=0.0.0.0
+# set app port
+ENV NUXT_PORT=3000
+
+
+CMD ["npm", "run", "start"]
+
+
+
+# FROM nginx
+# EXPOSE 3000
+# COPY ./nginx/default.conf /etc/nginx/conf.d/default.conf
+
+#COPY --from=builder /app/dist /usr/share/nginx/html
+
+
+
+
+
