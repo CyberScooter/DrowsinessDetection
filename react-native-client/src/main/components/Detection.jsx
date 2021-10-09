@@ -22,7 +22,7 @@ export default function DrowsinessDetection({props}){
             setFrameCount(0)
             setCalculatedResponse(e == "undefined" ? "Cannot find face" : e)
         }
-        // console.log(e);
+        console.log(e);
     }
 
     const memoChild = useMemo(() => <Camera setResponse={(e) => handleResponse(e)} startCamera={camera} />, [camera]);
@@ -30,8 +30,8 @@ export default function DrowsinessDetection({props}){
 
     return (
         <View>
-            {/* {memoChild} */}
-            <CameraTest />
+            {memoChild}
+            {/* <CameraTest /> */}
         </View>
     )
 

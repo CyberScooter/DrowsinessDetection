@@ -2,30 +2,32 @@ import React, { Component } from 'react';
 import { Camera } from 'expo-camera';
 import { cameraWithTensors, fetch, decodeJpeg, bundleResourceIO, renderToGLView } from '@tensorflow/tfjs-react-native';
 import { View, Text, StyleSheet, Platform } from 'react-native'
+import SocketIOClient from 'socket.io-client';
 import io from 'socket.io-client'
 
 import * as jpeg from 'jpeg-js';
 import * as tf from '@tensorflow/tfjs';
 
+// import { Worker } from 'react-native-workers';
 
 if (!window.location) {
     // App is running in simulator
     window.navigator.userAgent = 'ReactNative';
 }
 
- const socket = io("http://748a-86-24-137-183.ngrok.io", {reconnection: false});
-
+const socket = io("http://ded7-86-24-137-183.ngrok.io");
 
 const TensorCamera = cameraWithTensors(Camera);
 const DEF_DELAY = 1000;
 
-let tempImgBase64;
-let imgBase64;
+// let tempImgBase64;
+// let imgBase64;
 
 class CameraTester2 extends Component {
 
     constructor(props) {
         super(props)
+        // this.socket = SocketIOClient("http://748a-86-24-137-183.ngrok.io", {reconnection: false})
 
     }
 
@@ -53,58 +55,35 @@ class CameraTester2 extends Component {
             // }
         })
 
+
     }
+
+    // componentWillUnmount(){
+    //     worker.terminate()
+    // }
 
     handleCameraStream(imageAsTensors, updatePreview, gl) {
         const loop = async () => {
-            const tensor = await imageAsTensors.next().value
+            let tensor = await imageAsTensors.next().value
 
-            if(!!tensor){
+            const data = await tensor.array()
 
-                const [height, width] = tensor.shape
-                const data = new Buffer(
-                // concat with an extra alpha channel and slice up to 4 channels to handle 3 and 4 channels tensors
-                tf.concat([tensor, tf.ones([height, width, 1]).mul(255)], [-1])
-                    .slice([0], [height, width, 4])
-                    .dataSync(),
-                )
-    
-                const rawImageData = {data, width, height};
-                const jpegImageData = jpeg.encode(rawImageData, 200);
+            socket.emit("frame", {
+                frame: data
+            });
 
-                
-                tempImgBase64 = tf.util.decodeString(jpegImageData.data, "base64")
+            
 
-                if(tempImgBase64 == imgBase64){
-                  console.log("ran");
-                }
-      
-                imgBase64 = tempImgBase64
+            updatePreview();
+            gl.endFrameEXP();
 
-                
-                // let tempImgBase64 = tf.util.decodeString(jpegImageData.data, "base64")
-    
-                // socket.emit("frame", {
-                //     frame: tempImgBase64,
-                // });
+            tf.dispose(tensor);
 
-                // tempImgBase64 = tf.util.decodeString(jpegImageData.data, "base64")
 
-                // console.log("ran");
+            await new Promise(resolve => setTimeout(resolve, 500 || DEF_DELAY));
 
-                // if(tempImgBase64 == imgBase64){
-                //   console.log("repeat");
-                // }
-      
-                // imgBase64 = tempImgBase64
-    
-                tf.dispose(tensor);
-    
-    
-                await new Promise(resolve => setTimeout(resolve, 500 || DEF_DELAY));
-    
-                requestAnimationFrame(loop);
-            }
+            requestAnimationFrame(loop);
+            
 
         }
 
@@ -193,12 +172,15 @@ class CameraTester2 extends Component {
             // Tensor related props
             cameraTextureHeight={textureDims.height}
             cameraTextureWidth={textureDims.width}
-            resizeHeight={320}
-            resizeWidth={320}
+            resizeHeight={80}
+            resizeWidth={72}
+            zoom={0.65}
             resizeDepth={3}
             onReady={this.handleCameraStream}
-            autorender={true}
+            autorender={false}
         >
+
+            {/* 120 80 */}
         </TensorCamera>
         </View>
         
@@ -211,8 +193,8 @@ const styles = StyleSheet.create({
     preview: {
         justifyContent: 'flex-end',
         alignSelf: 'center',
-        width: 400,
-        height: 400,
+        width: 700/2,
+        height: 800/2,
     },
     container: {
         flex: 1,

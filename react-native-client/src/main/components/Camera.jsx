@@ -30,6 +30,7 @@ let interval;
 
 let requestID;
 
+const socket = io("http://ded7-86-24-137-183.ngrok.io", {reconnection: false});
 export default function CameraComponent({setFrameCount, setResponse, startCamera, frameCount}) {  
   let pageView;
 
@@ -53,18 +54,16 @@ export default function CameraComponent({setFrameCount, setResponse, startCamera
       }
     }
 
-    fetchData()
-
     if(!socketInit) {
-      socket = io("http://748a-86-24-137-183.ngrok.io", {reconnection: false});
       socket.on("connect", (e) => { console.log(e) });
 
       setSocketInit(true)
-      // fetchData();
+      fetchData();
       // return
 
       socket.addEventListener("frameAnalysis", function (event) {
-        setResponse(event)
+        // setResponse(event)
+        console.log(event);
         // if (event === undefined) {
         //   setResponse("")
         // }else {
@@ -84,65 +83,90 @@ export default function CameraComponent({setFrameCount, setResponse, startCamera
 
   const handleCameraStream = (imageAsTensors , updatePreview, gl) => {
     const loop = async () => {
-      const tensor = await imageAsTensors.next().value
+      let tensor = await imageAsTensors.next().value
 
-      if(!repeat){
-        if(!!tensor){
-          const [height, width] = tensor.shape
-          const data = new Buffer(
-          // concat with an extra alpha channel and slice up to 4 channels to handle 3 and 4 channels tensors
-          tf.concat([tensor, tf.ones([height, width, 1]).mul(255)], [-1])
-              .slice([0], [height, width, 4])
-              .dataSync(),
-          )
+      const data = await tensor.array()
 
-          const rawImageData = {data, width, height};
-          const jpegImageData = jpeg.encode(rawImageData, 200);
+      socket.emit("frame", {
+          frame: data
+      });
 
-          tempImgBase64 = tf.util.decodeString(jpegImageData.data, "base64")
+      
 
-          if(tempImgBase64 == imgBase64){
-            // console.log("ran");
-            // repeat = true;
-          }
-          // console.log(repeat);
+      updatePreview();
+      gl.endFrameEXP();
 
-          imgBase64 = tempImgBase64
+      tf.dispose(tensor);
 
-          // console.log(socket);
-          // socket.emit("frame", {
-          //   frame: tempImgBase64,
-          // });
 
-          // setTimeout(() => setBase64(imgBase64), 500)
+      await new Promise(resolve => setTimeout(resolve, 500 || DEF_DELAY));
+
+      requestAnimationFrame(loop);
+      
+
+  }
+
+  if(startCamera) loop();
+    // const loop = async () => {
+    //   const tensor = await imageAsTensors.next().value
+
+    //   if(!repeat){
+    //     if(!!tensor){
+    //       const [height, width] = tensor.shape
+    //       const data = new Buffer(
+    //       // concat with an extra alpha channel and slice up to 4 channels to handle 3 and 4 channels tensors
+    //       tf.concat([tensor, tf.ones([height, width, 1]).mul(255)], [-1])
+    //           .slice([0], [height, width, 4])
+    //           .dataSync(),
+    //       )
+
+    //       const rawImageData = {data, width, height};
+    //       const jpegImageData = jpeg.encode(rawImageData, 200);
+
+    //       tempImgBase64 = tf.util.decodeString(jpegImageData.data, "base64")
+
+    //       if(tempImgBase64 == imgBase64){
+    //         // console.log("ran");
+    //         // repeat = true;
+    //       }
+    //       // console.log(repeat);
+
+    //       imgBase64 = tempImgBase64
+
+    //       // console.log(socket);
+    //       // socket.emit("frame", {
+    //       //   frame: tempImgBase64,
+    //       // });
+
+    //       // setTimeout(() => setBase64(imgBase64), 500)
           
-          // console.log(encoded);
+    //       // console.log(encoded);
 
-          // tf.dispose([tensor]);
-
-
-          // let items = nextImageTensor.filter((item) => item !== 0 )
-          // console.log(items.length);
-          // const encoded = base64.encodeFromByteArray(nextImageTensor);
-          // console.log(encoded);
-          // await getPrediction(nextImageTensor);
-
-          await sleep(500)
+    //       // tf.dispose([tensor]);
 
 
-          requestAnimationFrame(loop);
-        }
-      }else {
-        repeat = false;
-        imgBase64 = "-1";
-        tempImgBase64 = "-2";
-        console.log("asdfasdfadf");
-        forceUpdate();
-      }
+    //       // let items = nextImageTensor.filter((item) => item !== 0 )
+    //       // console.log(items.length);
+    //       // const encoded = base64.encodeFromByteArray(nextImageTensor);
+    //       // console.log(encoded);
+    //       // await getPrediction(nextImageTensor);
 
-    };
+    //       await sleep(500)
 
-    if(startCamera) loop()
+
+    //       requestAnimationFrame(loop);
+    //     }
+    //   }else {
+    //     repeat = false;
+    //     imgBase64 = "-1";
+    //     tempImgBase64 = "-2";
+    //     console.log("asdfasdfadf");
+    //     forceUpdate();
+    //   }
+
+    // };
+
+    // if(startCamera) loop()
 
     // if(startCamera) {
     //   if(repeat){
@@ -263,18 +287,19 @@ export default function CameraComponent({setFrameCount, setResponse, startCamera
     )
   }else {
     return (
-        <View style={styles.container} collapsable={false} >
+        <View collapsable={false} >
 
           <TensorCamera
-            style={styles.camera}
+            style={styles.preview}
             // Standard Camera props
             type={Camera.Constants.Type.front}
             // Tensor related props
             zoom={0}
             cameraTextureHeight={textureDims.height}
             cameraTextureWidth={textureDims.width}
-            resizeHeight={200}
-            resizeWidth={152}
+            resizeHeight={80}
+            resizeWidth={72}
+            zoom={0.65}
             resizeDepth={3}
             onReady={handleCameraStream}
             autorender={true}
@@ -315,8 +340,8 @@ const styles = StyleSheet.create({
   preview: {
     justifyContent: 'flex-end',
     alignSelf: 'center',
-    width: 250,
-    height: 500,
+    width: 700/2,
+    height: 800/2,
   },
   capture: {
     flex: 0,

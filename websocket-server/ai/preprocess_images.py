@@ -7,6 +7,9 @@ import sys
 import numpy as np
 from imageio import imread
 from scipy.spatial import distance
+import tensorflow as tf
+import json
+import matplotlib.pyplot as plt
 
 detector = dlib.get_frontal_face_detector()
 dlib_facelandmark = dlib.shape_predictor(
@@ -34,12 +37,24 @@ def drowsiness_recognition(frame2):
     # encoded_data = frame2.split(',')[1]
     # nparr = np.fromstring(base64.b64decode(encoded_data), np.uint8)
 
-    nparr = np.fromstring(base64.b64decode(frame2), np.uint8)
-    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    data = np.asarray(frame2, np.uint8)
 
-    # img = imread(io.BytesIO(base64.b64decode(frame2.encode())), pilmode="RGB")
+    # print(data)
 
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # nparr = np.fromstring(base64.b64decode(frame2), np.uint8)
+
+    # img = cv2.imdecode(data, cv2.IMREAD_COLOR)
+    
+    gray = cv2.cvtColor(data, cv2.COLOR_BGR2GRAY)
+
+    # img = cv2.imdecode(nparr, cv2.IMREAD_COLOR) use this
+
+    # img = imread(io.BytesIO(base64.b64decode(frame2.encode())), pilmode="RGB") NO
+
+    # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    # plt.imshow(vis2, cmap='gray')
+    # plt.show()
 
     faces = detector(gray)
 
@@ -60,7 +75,7 @@ def drowsiness_recognition(frame2):
                 next_point = 36
             x2 = face_landmarks.part(next_point).x
             y2 = face_landmarks.part(next_point).y
-            cv2.line(img, (x, y), (x2, y2), (0, 255, 0), 1)
+            cv2.line(gray, (x, y), (x2, y2), (0, 255, 0), 1)
 
         for n in range(42, 48):
             x = face_landmarks.part(n).x
@@ -71,7 +86,7 @@ def drowsiness_recognition(frame2):
                 next_point = 42
             x2 = face_landmarks.part(next_point).x
             y2 = face_landmarks.part(next_point).y
-            cv2.line(img, (x, y), (x2, y2), (0, 255, 0), 1)
+            cv2.line(gray, (x, y), (x2, y2), (0, 255, 0), 1)
 
         left_ear = calculate_EAR(leftEye)
         right_ear = calculate_EAR(rightEye)
@@ -82,9 +97,9 @@ def drowsiness_recognition(frame2):
             return "DEAD"
         elif EAR < 0.26:
             return "DROWSY"
-            cv2.putText(img, "DROWSY", (20, 100),
+            cv2.putText(gray, "DROWSY", (20, 100),
                         cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 255), 4)
-            cv2.putText(img, "Are you Sleepy?", (20, 400),
+            cv2.putText(gray, "Are you Sleepy?", (20, 400),
                         cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 4)
             print("Drowsy")
         return "AWAKE"
