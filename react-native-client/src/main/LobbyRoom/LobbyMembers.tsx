@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { StyleSheet, Text, View, SafeAreaView, SectionList, StatusBar, Button } from "react-native";
 import { FlatList } from "react-native-gesture-handler";
 
+let driving= 3;
 
 export default function LobbyMembers({route}) {
 
@@ -20,22 +21,34 @@ export default function LobbyMembers({route}) {
 
     }
       
+    let currentlyDrivingComponent;
+ 
     return (
+      
       <SafeAreaView style={styles.container}>
+        <View>
+        <Text>Members:  </Text>
+        </View>
         <FlatList
           data={Items}
           renderItem={({item}) => {
             if(route.params.owner) {
+              currentlyDrivingComponent = null
+              if(item.id == driving) currentlyDrivingComponent = <Text>Currently driving</Text>;
               return (
                 <View style={styles.item}>
                   <Text style={styles.title}>{item.user}</Text>
                   <Button color="darkred" title="Remove User" onPress={() => removeUser(item.id)}/>
+                  {currentlyDrivingComponent}
                 </View>
               )
             }else {
+              currentlyDrivingComponent = null
+              if(item.id == driving) currentlyDrivingComponent = <Text>Currently driving</Text>;
               return (
                 <View style={styles.item}>
                   <Text style={styles.title}>{item.user}</Text>
+                  {currentlyDrivingComponent}
                 </View>
               )
             }

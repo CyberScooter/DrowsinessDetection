@@ -87,7 +87,7 @@ export default class LobbyRoom extends Component {
       const Item = ({ item, section}) => {
         if(item.count){
           return (
-            <View style={styles.item}>
+            <View style={styles.mainButtons}>
               <Text style={styles.title}>Number of members: {item.count}</Text>
               <Button color="coral" title="Show members" onPress={() => this.props.navigation.navigate({name: "Members", params: {lobbyID: section.lobbyID, owner: section.owner}})} />
             </View>
@@ -101,7 +101,7 @@ export default class LobbyRoom extends Component {
         }else if(item.lobbyInactive){
           return (
             <View style={styles.mainButtons}>
-              <Button color="green" title="Become a driver" onPress={() => this.becomeDriver()}/>
+              <Button color="green" title="Become a driver" onPress={() => this.props.navigation.navigate({name: "Driver", params: {userID: 3}})}/>
             </View>
           )
         }else if (item.lobbyDelete) {
@@ -131,7 +131,6 @@ export default class LobbyRoom extends Component {
             extraData={this.state.refresh}
             keyExtractor={(item, index) => item.id + index}
             renderItem={( {item , section} ) => <Item item={item} section={section} />}
-            
             renderSectionHeader={({ section: { title } }) => (
               <Text style={styles.header}>{title}</Text>
             )}
@@ -150,23 +149,31 @@ const styles = StyleSheet.create({
     
   },
   mainButtons: {
-    padding: 12
+    backgroundColor: "#008F6D",
+    padding: 12,
+    borderRadius: 10
   },
   item: {
     backgroundColor: "#008F6D",
     padding: 10,
     marginHorizontal: 20,
     marginVertical: 8,
-    borderRadius: 5
+    borderRadius: 10
   },
   header: {
-    color: "black",
+    paddingLeft: 13,
+    backgroundColor: "#008F6D",
+    marginTop: 20,
+    color: "white",
     padding: 8,
-    fontSize: 32,
+    fontSize: 23,
+    borderRadius: 10
   },
   title: {
     color: "azure",
-    fontSize: 24
+    fontSize: 19,
+    textDecorationLine: 'underline',
+    marginBottom: 10
   },
   secondaryButtons: {
     padding: 20

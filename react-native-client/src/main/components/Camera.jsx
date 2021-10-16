@@ -6,12 +6,13 @@ import { useEffect } from 'react';
 import * as tf from '@tensorflow/tfjs';
 import '@tensorflow/tfjs-react-native';
 // import {io} from 'socket.io-client';
+import * as Location from 'expo-location';
 import {GLView} from 'expo-gl'
 
 import { captureRef } from 'react-native-view-shot';
 import io from 'socket.io-client'
 import { Buffer } from 'buffer'
-import { useKeepAwake } from 'expo-keep-awake';
+import {useNetInfo} from '@react-native-community/netinfo';
 
 import Orientation from 'react-native-orientation';
 import {cameraWithTensors} from '@tensorflow/tfjs-react-native';
@@ -23,23 +24,18 @@ import * as Permissions from 'expo-permissions';
 import useForceUpdate from 'use-force-update';
 // import {initiateSocket, disconnectSocket, sendFrame} from './FrameCaptureSocket'
 
-let repeat = false;
-let imgBase64 = "-1";
-let tempImgBase64 = "-2";
-let interval;
+let instances = 0;
+let frameCount = 0;
+let userID;
 
-let requestID;
+const socket = io("https://c0ed-86-24-137-183.ngrok.io");
+export default function CameraComponent({route}) {  
+  const netInfo = useNetInfo()
 
-const socket = io("http://ded7-86-24-137-183.ngrok.io", {reconnection: false});
-export default function CameraComponent({setFrameCount, setResponse, startCamera, frameCount}) {  
-  let pageView;
-
-  useKeepAwake();
-
+  const [camera, startCamera] = useState(false)
   const [socketInit, setSocketInit] = useState(false)
   const [refreshCamera, setRefreshCamera] = useState(0)
-  const forceUpdate = useForceUpdate();
-
+  const [permissions, setPermissions] = useState("")
 
   const TensorCamera = cameraWithTensors(Camera);
 
@@ -47,30 +43,54 @@ export default function CameraComponent({setFrameCount, setResponse, startCamera
     
     const fetchData = async () => {
       await tf.ready();
-      console.log("runn2");
       const camera = await Camera.requestPermissionsAsync()
+      const location = await Location.requestForegroundPermissionsAsync();
       if (camera.status !== 'granted') {
-          Alert.alert('Access denied')
+          setPermissions("Camera permission not enabled, enable to use the drowsiness detection")
+      }else if(location.status !== 'granted'){
+          setPermissions("Location permission not enabled, enable to use the drowsiness detection")
       }
     }
 
     if(!socketInit) {
+      userID = route.params.userID
       socket.on("connect", (e) => { console.log(e) });
 
       setSocketInit(true)
       fetchData();
       // return
 
-      socket.addEventListener("frameAnalysis", function (event) {
-        // setResponse(event)
-        console.log(event);
-        // if (event === undefined) {
-        //   setResponse("")
-        // }else {
-        //   if (event == "DROWSY" || event == "DEAD") {
-        //     setResponse("DROWSY/DEAD")
-        //   }
-        // }
+      socket.addEventListener("frameAnalysis", async function (event) {
+        if(instances == 2) {
+          let location;
+          try{
+            location = await Location.getCurrentPositionAsync({});
+
+            // REST API request location.latitude, location.longitude
+          }catch(_){
+
+          }
+          console.log(location);
+          instances = 0;
+          return
+        }
+
+        if (event === undefined) {
+          return;
+        }
+
+        if (event == "DROWSY" || event == "DEAD") {
+          frameCount++;
+        } else {
+          frameCount = 0;
+        }
+
+        if (frameCount >= 3) {
+          console.log(event);
+          frameCount = 0;
+          instances++;
+          return
+        } 
       });
     }
 
@@ -83,30 +103,33 @@ export default function CameraComponent({setFrameCount, setResponse, startCamera
 
   const handleCameraStream = (imageAsTensors , updatePreview, gl) => {
     const loop = async () => {
-      let tensor = await imageAsTensors.next().value
 
-      const data = await tensor.array()
+      if(netInfo.isConnected){
+        try{
+          let tensor = await imageAsTensors.next().value
 
-      socket.emit("frame", {
-          frame: data
-      });
+          const data = await tensor.array()
 
-      
+          socket.emit("frame", {
+              frame: data
+          });
 
-      updatePreview();
-      gl.endFrameEXP();
+          updatePreview();
+          gl.endFrameEXP();
 
-      tf.dispose(tensor);
+          tf.dispose(tensor);
+        }catch(e){
+          
+        }
 
-
+      }
       await new Promise(resolve => setTimeout(resolve, 500 || DEF_DELAY));
 
       requestAnimationFrame(loop);
       
-
   }
 
-  if(startCamera) loop();
+  if(camera) loop();
     // const loop = async () => {
     //   const tensor = await imageAsTensors.next().value
 
@@ -252,18 +275,12 @@ export default function CameraComponent({setFrameCount, setResponse, startCamera
 
   }
 
-  const snap = async () => {
-    // console.log("adfadfasdfasdfasdfafds");
-    let result = await captureRef(pageView, {format: 'jpg', quality: 1.0});
-
-    console.log(result);
-
+  const startCapturing = () => {
+    startCamera(true)
   }
 
-  const resetCamera = () => {
-    clearInterval(interval)
-    console.log("ran");
-    setRefreshCamera(!refreshCamera)
+  const stopCapturing = () => {
+    startCamera(false)
   }
 
   const DEF_DELAY = 1000;
@@ -281,13 +298,29 @@ export default function CameraComponent({setFrameCount, setResponse, startCamera
     width: 1600,
   };
 
-  if(!startCamera) {
+  if(!camera) {
     return (
-      null
+      <View style={{position: 'relative',height: 500, alignItems: 'center', justifyContent: 'center',}} >
+        <Button title="Start capturing" onPress={() => startCapturing()}/>
+
+      </View>
     )
+  }else if(!!permissions){
+    return (
+      <View style={{position: 'relative',height: 500, alignItems: 'center', justifyContent: 'center',}}>
+        <Text >
+          {permissions}
+        </Text>
+      </View>
+
+    ) 
+    
   }else {
     return (
-        <View collapsable={false} >
+        <View collapsable={false} style={{
+          padding: 50,
+          backgroundColor: netInfo.isConnected ? 'transparent' : 'coral',
+        }} >
 
           <TensorCamera
             style={styles.preview}
@@ -304,6 +337,11 @@ export default function CameraComponent({setFrameCount, setResponse, startCamera
             onReady={handleCameraStream}
             autorender={true}
           />
+
+          <View style={{marginTop: 40}}>
+            <Button title="Stop capturing" onPress={() => stopCapturing()}/>
+
+          </View>
 
           {/* <Camera 
             style={styles.preview}

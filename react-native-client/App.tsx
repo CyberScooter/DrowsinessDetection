@@ -2,7 +2,6 @@ import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { StyleSheet, Text, View, Button } from 'react-native';
 import Camera from './src/main/components/Camera';
-import ComponentTest from './src/main/components/Detection'
 import LobbyRoom from './src/main/LobbyRoom/LobbyRooms';
 import LobbyMembers from './src/main/LobbyRoom/LobbyMembers';
 import { NavigationContainer } from '@react-navigation/native';
@@ -16,7 +15,6 @@ function HomeScreen({navigation}) {
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#A9A9A9'}}>
       <Button title="Go to camera" onPress={() => {navigation.navigate("Driver")}}/>
       <Button title="Driver drowsiness detection lobby room" onPress={() => {navigation.navigate("Lobby")}} />
-      <Button title="Testing component" onPress={() => {navigation.navigate("Test")}} />
     </View>
   );
 }
@@ -29,7 +27,6 @@ export default function App() {
         <Stack.Screen name="Lobby" options={{orientation: 'portrait', contentStyle: {backgroundColor: '#A9A9A9'}}} component={LobbyRoom}/>
         <Stack.Screen name="Driver" options={{title: "Driving mode on"}} component={Camera} initialParams={{'authenticated':true}}/>
         <Stack.Screen name="Members" options={{title: "Lobby members", orientation: 'portrait', contentStyle: {backgroundColor: '#A9A9A9'}}} component={LobbyMembers}/>
-        <Stack.Screen name="Test" options={{orientation: 'portrait'}} component={ComponentTest}  />
       </Stack.Navigator>
     </NavigationContainer>
 

@@ -1,2 +1,3 @@
 <uses-permission android:name="android.permission.CAMERA"></uses-permission>
+<uses-permission android:name="android.permission.LOCATION"></uses-permission>
  <Button android:soundEffectsEnabled="false"/>

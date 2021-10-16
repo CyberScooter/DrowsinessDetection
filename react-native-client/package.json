@@ -46,7 +46,9 @@
     "redux": "^4.1.1",
     "socket.io-client": "^4.2.0",
     "tensor-as-base64": "^0.1.1",
-    "use-force-update": "^1.0.7"
+    "use-force-update": "^1.0.7",
+    "@react-native-community/netinfo": "6.0.0",
+    "expo-location": "~12.1.2"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",
