@@ -27,9 +27,10 @@ import useForceUpdate from 'use-force-update';
 let instances = 0;
 let frameCount = 0;
 let userID;
+const socket = io("https://9759-86-24-137-183.ngrok.io" , {reconnection: false});
 
-const socket = io("https://c0ed-86-24-137-183.ngrok.io");
 export default function CameraComponent({route}) {  
+
   const netInfo = useNetInfo()
 
   const [camera, startCamera] = useState(false)
@@ -53,7 +54,7 @@ export default function CameraComponent({route}) {
     }
 
     if(!socketInit) {
-      userID = route.params.userID
+      // userID = route.params.userID
       socket.on("connect", (e) => { console.log(e) });
 
       setSocketInit(true)
@@ -104,7 +105,6 @@ export default function CameraComponent({route}) {
   const handleCameraStream = (imageAsTensors , updatePreview, gl) => {
     const loop = async () => {
 
-      if(netInfo.isConnected){
         try{
           let tensor = await imageAsTensors.next().value
 
@@ -122,7 +122,6 @@ export default function CameraComponent({route}) {
           
         }
 
-      }
       await new Promise(resolve => setTimeout(resolve, 500 || DEF_DELAY));
 
       requestAnimationFrame(loop);
@@ -332,7 +331,7 @@ export default function CameraComponent({route}) {
             cameraTextureWidth={textureDims.width}
             resizeHeight={80}
             resizeWidth={72}
-            zoom={0.65}
+            zoom={0.4}
             resizeDepth={3}
             onReady={handleCameraStream}
             autorender={true}

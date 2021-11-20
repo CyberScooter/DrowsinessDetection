@@ -2,7 +2,7 @@ from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 # from flask_cors import CORS
 # from ai.webcam_detection import drowsiness_detection
-from ai.preprocess_images import drowsiness_recognition
+from ai.drowsiness_detection_landmarks import drowsiness_recognition as drowsiness_detection_landmarks
 
 
 # Creating a flask app and using it to instantiate a socket object
@@ -23,12 +23,22 @@ def test_connect():
     emit('connect', 'connected!')
 
 
+# classifies frames based on landmarks, EAR values
 @socketio.on('frame')
 def value_changed(message):
 
     # print(message['frame'])
 
-    emit('frameAnalysis', drowsiness_recognition(
+    emit('frameAnalysis', drowsiness_detection_landmarks(
+        message['frame']))
+
+# classifies frames through a CNN model
+@socketio.on('frameCNNClassification')
+def value_changed(message):
+
+    # print(message['frame'])
+
+    emit('frameAnalysis', drowsiness_detection_landmarks(
         message['frame']))
 
 
