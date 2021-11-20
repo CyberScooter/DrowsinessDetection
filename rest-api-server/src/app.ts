@@ -6,17 +6,19 @@ import UserController from "@/modules/users/users.controller";
 import UserService from "@/modules/users/users.service";
 import { config } from "dotenv";
 import * as csrf from "csurf";
+import LobbyController from "./modules/lobbies/lobbies.controller";
+import LobbyService from "./modules/lobbies/lobbies.service";
 
-let origin;
+// let origin;
 
-if (process.env.NODE_PRODUCTION == "production") {
-  origin = "http://localhost:7999";
-} else {
-  origin = "http://localhost:3000";
-}
+// if (process.env.NODE_PRODUCTION == "production") {
+//   origin = "http://localhost:7999";
+// } else {
+//   origin = "http://localhost:3000";
+// }
 
 var corsOptions = {
-  origin: origin,
+  // origin: *,
   credentials: true,
   optionsSuccessStatus: 200, // For legacy browser support
 };
@@ -26,7 +28,10 @@ config();
 // var server = require("http").Server(app);
 // const io = require("socket.io")(server);
 
-const controllers = [new UserController("/user", new UserService())];
+const controllers = [
+  new LobbyController("/lobby", new LobbyService()),
+  new UserController("/user", new UserService()),
+];
 
 app.use(cookieParser());
 app.use(express.json());

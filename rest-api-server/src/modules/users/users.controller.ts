@@ -12,6 +12,7 @@ export default class UserController {
   private initialiseRoutes() {
     console.log(`Init: ${this.path}`);
     this.router.post("/register", async (req, res) => {
+      console.log(req.body);
       let userRegistration = await this.userService.userRegistration(req.body);
 
       if (userRegistration.error == "Internal server error")
@@ -47,12 +48,6 @@ export default class UserController {
       return res.status(200).json(userLogin);
     });
 
-    this.router.get("/logout", authenticateToken, async (req, res) => {
-      res.clearCookie("sessionid");
-      res.status(200).send();
-    });
-
-    // maybe split to more routes
     this.router.get("/data", authenticateToken, async (req: any, res) => {
       let userData = await this.userService.userData(req.user.id);
 
@@ -73,13 +68,6 @@ export default class UserController {
       if (newToken.error == "Internal server error")
         return res.status(500).json(newToken);
       res.status(200).json(newToken);
-    });
-
-    this.router.get("/:id/accessToken", authenticateToken, async (req, res) => {
-      let userID = parseInt(req.params.id);
-      let result = await this.userService.getAccessToken(userID);
-
-      res.status(200).json(result);
     });
   }
 }

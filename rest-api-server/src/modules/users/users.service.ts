@@ -10,33 +10,35 @@ export default class UserService {
 
   public async userRegistration(user: UserDTO) {
     try {
-      // console.log(user)
       let userFound = await this.pool.maybeOne(
         sql`
-                    select id from users where username=${user.username} OR email=${user.email}
-                `
+            select id from users where username=${user.username} OR email=${user.email}
+        `
       );
-      // console.log(userFound);
 
       if (userFound)
         return {
           error: "User already registered under this email or username",
         };
 
-      const MY_NAMESPACE = "c9717b02-748e-418f-9dc7-aded5137a87e";
+      let insertedEARRow: any = await this.pool.one(
+        sql`
+          insert into ear_values(created_at, updated_at) values (now(), now()) returning id
+        `
+      );
 
-      let accessToken = uuidv5(user.username, MY_NAMESPACE);
+      console.log(insertedEARRow);
 
       const salt = genSaltSync(10);
       const hash = hashSync(user.password, salt);
 
       let inserted = await this.pool.one(
         sql`
-            insert into users(username, password, email, access_token) values (${user.username},${hash},${user.email}, ${accessToken}) returning *
+            insert into users(ear_values_id, username, email, hash, created_at, updated_at) values (${insertedEARRow.id}, ${user.username}, ${user.email}, ${hash}, now(), now()) returning *
             `
       );
-      delete inserted.password;
-      delete inserted.access_token;
+      delete inserted.hash;
+      delete inserted.ear_values_id;
 
       return {
         user: inserted,
@@ -47,7 +49,8 @@ export default class UserService {
           }
         ),
       };
-    } catch (_) {
+    } catch (e) {
+      console.log(e);
       return { error: "Internal server error" };
     }
   }
@@ -59,14 +62,13 @@ export default class UserService {
     try {
       let userFound: any = await this.pool.maybeOne(
         sql` 
-                    select * from users where username=${user.username}
-                `
+            select * from users where username=${user.username}
+          `
       );
       if (userFound === null) return { error: "User does not exist" };
 
       const match = await compare(user.password, userFound.password);
-      delete userFound.password;
-      delete userFound.access_token;
+      delete userFound.hash;
 
       if (match)
         return {
@@ -79,67 +81,11 @@ export default class UserService {
       return { error: "Internal server error" };
     }
   }
-  // public generateToken(userId: number) {
-  //   try {
-  //     return {
-  //       token: jwt.sign({ id: userId }, process.env.JWT_TOKEN_SECRET, {
-  //         expiresIn: "7d",
-  //       }),
-  //     };
-  //   } catch (_) {
-  //     return { error: "Internal server error" };
-  //   }
-  // }
 
-  // TODO maybe split to more methods
   public async userData(userId: number) {
     const user = (await this.pool.one(
       sql`select * from users where id = ${userId}`
     )) as any;
     return { user, error: null };
-  }
-
-  public async addReview(review: ReviewDTO, token: string) {
-    try {
-      var decodedToken: any = jwt.verify(token, process.env.JWT_TOKEN_SECRET);
-
-      let insertedReview = await this.pool.one(
-        sql`
-                    insert into reviews
-                        (rating, title, content, is_publisher_review, book_id, user_id, created_at, updated_at) 
-                    VALUES 
-                        (${review.rating}, ${review.title}, ${review.content}, ${review.is_publisher_review}, ${review.book_id}, ${decodedToken.id}, now(), now())
-                    returning id
-                `
-      );
-
-      let reviewId = insertedReview.id;
-
-      await this.pool.one(
-        sql`
-                    insert into publisher_reviews
-                        (publisher_review_id, book_publisher_id)
-                    VALUES
-                        (${reviewId}, ${review.book_publisher_id})
-
-                `
-      );
-
-      return { error: "false" };
-    } catch (_) {
-      return { error: "Internal server error" };
-    }
-  }
-
-  public async getAccessToken(userID: number) {
-    let userFound = await this.pool.one(sql`
-      select access_token from users where id=${userID}
-    `);
-
-    if (userFound) {
-      return { accessToken: userFound.access_token };
-    } else {
-      return { error: "No access token found" };
-    }
   }
 }
