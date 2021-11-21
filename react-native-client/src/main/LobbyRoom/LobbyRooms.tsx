@@ -1,6 +1,8 @@
 import React, {Component} from "react";
 import { StyleSheet, Text, View, SafeAreaView, SectionList, StatusBar, Button, BackHandler} from "react-native";
 import {LobbyRoomState} from './LobbyRoom.dto'
+import {restAPIURL} from '../../../env'
+import axios from 'axios'
 
 import { useNavigation } from '@react-navigation/native';
 
@@ -9,48 +11,67 @@ export default class LobbyRoom extends Component {
   
    state: LobbyRoomState = {
      refresh: false,
-     items: [
-      {
-        title: "LobbyName test 1",
-        owner: false,
-        lobbyID: 3,
-        data: [
-          {
-            id: "numberOfMembers",
-            count: 10
-          },
-          {
-            id: "lobbyActive",
-            userIDTracking: 3,
-            lobbyActive: true
-          },
-          {
-            id: "deleteLobby",
-            lobbyDelete: true
-          }
-        ]
-      },
-      {
-        title: "LobbyName test 2",
-        lobbyID: 4,
-        owner: true,
-        data: [
-          {
-            id: "numberOfMembers",
-            count: 13
-          },
-          {
-            id: "lobbyInactive",
-            lobbyInactive: true
-          },
-          {
-            id: "leaveLobby",
-            leaveLobby: true
-          }
-        ]
-      },
-    ]
+     items: [],
 
+   }
+
+   async componentDidMount(){
+    let items = []
+    let token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MX0.BhcT-kWzUAwZzQ55XGnUpGZKuMf2dlWL3u9jvgfhWss"
+    axios.get(`${restAPIURL}/api/lobby/list`,{
+        headers: {
+          Authorization: 'Bearer ' + token //the token is a variable which holds the token
+        }
+      })
+      .then((res) => {
+
+        if(res.data.length == 0) return;
+
+        items = res.data.map((el) => {
+
+          let data: any = [{
+            id: "numberOfMembers",
+            count: el.member_count
+          }]
+
+          if(el.user_tracking != 0){
+            data.push({
+              id: "lobbyActive",
+              userIDTracking: el.user_tracking,
+              lobbyActive: true
+            })
+          }else {
+            data.push({
+              id: "lobbyInactive",
+              lobbyInactive: true
+            })
+          }
+
+          if(el.lobby_owner){
+            data.push({
+              id: "deleteLobby",
+              lobbyDelete: true
+            })
+          }else {
+            data.push({
+              id: "leaveLobby",
+              leaveLobby: true
+            })
+          }
+
+          return {
+            title: el.lobby_name,
+            owner: el.lobby_owner,
+            lobbyID: el.lobby_id,
+            data: data
+
+          }
+
+        })
+
+        this.setState({items: items})
+
+      })
    }
 
 
@@ -82,7 +103,21 @@ export default class LobbyRoom extends Component {
 
     render() {
 
+      let loading;
 
+      if(this.state.items.length == 0){
+        loading = (
+          <Text style={styles.loading}>Loading lobbies...</Text>
+        )
+      }else {
+        loading = (
+          <View style={styles.mainButtons}>
+            <Text style={styles.pageTitle}>Lobbies</Text>
+            <Button color="blue" title="Refresh" onPress={() => this.setState({refresh: !this.state.refresh})}/>
+          </View>
+
+        )
+      }
 
       const Item = ({ item, section}) => {
         if(item.count){
@@ -126,6 +161,7 @@ export default class LobbyRoom extends Component {
 
         return (
           <SafeAreaView style={styles.container}>
+          {loading}
           <SectionList
             sections={this.state.items}
             extraData={this.state.refresh}
@@ -135,7 +171,7 @@ export default class LobbyRoom extends Component {
               <Text style={styles.header}>{title}</Text>
             )}
           />
-        </SafeAreaView>
+          </SafeAreaView>
           );
     }
 
@@ -151,14 +187,12 @@ const styles = StyleSheet.create({
   mainButtons: {
     backgroundColor: "#008F6D",
     padding: 12,
-    borderRadius: 10
   },
   item: {
     backgroundColor: "#008F6D",
     padding: 10,
     marginHorizontal: 20,
     marginVertical: 8,
-    borderRadius: 10
   },
   header: {
     paddingLeft: 13,
@@ -166,16 +200,29 @@ const styles = StyleSheet.create({
     marginTop: 20,
     color: "white",
     padding: 8,
-    fontSize: 23,
-    borderRadius: 10
+    fontSize: 30,
+    textAlign: 'center',
+    fontWeight: 'bold'
+
   },
   title: {
     color: "azure",
     fontSize: 19,
-    textDecorationLine: 'underline',
-    marginBottom: 10
+    textAlign: 'center',
+    marginBottom: 10,
   },
   secondaryButtons: {
     padding: 20
+  },
+  loading: {
+    fontSize: 24,
+    color: "red"
+  },
+  pageTitle: {
+    fontSize: 30,
+    textAlign: 'center',
+    fontWeight: 'bold',
+    marginBottom: 3,
+    color: 'white'
   }
 });

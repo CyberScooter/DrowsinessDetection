@@ -1,34 +1,68 @@
 import React, { useEffect } from "react";
 import { StyleSheet, Text, View, SafeAreaView, SectionList, StatusBar, Button } from "react-native";
 import { FlatList } from "react-native-gesture-handler";
+import {restAPIURL} from '../../../env'
+import axios from 'axios'
 
 let driving= 3;
 
 export default function LobbyMembers({route}) {
 
-    const [Items, setItems] = React.useState([
-        {id: "1", user: "Yokek344"},
-        {id: "2", user: "Yokek554"},
-        {id: "3", user: "Lmaoo3444"}
+    // const [Items, setItems] = React.useState([
+    //     {id: "1", user: "Yokek344"},
+    //     {id: "2", user: "Yokek554"},
+    //     {id: "3", user: "Lmaoo3444"}
 
-    ])
+    // ])
+    const [Items, setItems] = React.useState([])
+    const [init, setInit] = React.useState(false)
+
+    // const fetchUser = async () => {
+    //   const url = `http://localhost:3002/api/lobby/members`;
+    //   const response = await axios.get(url);
+    //   console.log(response.data);
+    // };
 
     useEffect(()=> {
+
       console.log(route.params?.lobbyID);
-    })
+
+      let items = []
+      let token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MX0.BhcT-kWzUAwZzQ55XGnUpGZKuMf2dlWL3u9jvgfhWss"
+      axios.get(`${restAPIURL}/api/lobby/members?lobbyID=${route.params?.lobbyID}`, {
+        headers: {
+          Authorization: 'Bearer ' + token //the token is a variable which holds the token
+        }
+        })
+        .then((res) => {
+
+          if(res.data.length == 0) return;
+
+          driving = res.data[0].user_tracking
+
+          items = res.data.map((el) => {
+
+            return {
+              id: el.id,
+              user: el.username
+            }
+
+          })
+
+          setItems(items)
+        })
+        
+    }, [])
 
     async function removeUser(id){
 
     }
       
     let currentlyDrivingComponent;
- 
-    return (
-      
-      <SafeAreaView style={styles.container}>
-        <View>
-        <Text>Members:  </Text>
-        </View>
+    let flatList;
+
+    if(Items.length > 0){
+      flatList = (
         <FlatList
           data={Items}
           renderItem={({item}) => {
@@ -54,6 +88,20 @@ export default function LobbyMembers({route}) {
             }
           }}
         />
+      )
+    }else {
+      flatList = (
+        <Text style={styles.loading}>Loading members...</Text>
+      )
+    }
+ 
+    return (
+      
+      <SafeAreaView style={styles.container}>
+        <View style={styles.item}>
+          <Text style={styles.title}>Members</Text>
+        </View>
+        {flatList}
       </SafeAreaView>
     );
         
@@ -67,7 +115,7 @@ const styles = StyleSheet.create({
       marginHorizontal: 16
     },
     item: {
-      backgroundColor: "#f9c2ff",
+      backgroundColor: "#008F6D",
       padding: 20,
       marginVertical: 8
     },
@@ -76,6 +124,13 @@ const styles = StyleSheet.create({
       backgroundColor: "#fff"
     },
     title: {
-      fontSize: 24
+      textAlign: 'center',
+      fontSize: 24,
+      color: 'white',
+      fontWeight: 'bold'
+    },
+    loading: {
+      fontSize: 20,
+      color: 'red'
     }
   });

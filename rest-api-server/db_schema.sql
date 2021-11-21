@@ -11,17 +11,17 @@ CREATE TABLE "users" (
 CREATE TABLE "lobbies" (
   "id" SERIAL PRIMARY KEY,
   "tracking_id" int,
-  "user_id" int,
   "name" varchar,
   "unique_join_code" varchar,
   "created_at" timestamp,
   "updated_at" timestamp
 );
 
-CREATE TABLE "users_lobbies" (
+CREATE TABLE "lobby_members" (
   "id" SERIAL PRIMARY KEY,
   "user_id" int,
   "lobby_id" int,
+  "owner" boolean,
   "created_at" timestamp,
   "updated_at" timestamp
 );
@@ -45,9 +45,9 @@ CREATE TABLE "ear_values" (
   "updated_at" timestamp
 );
 
-ALTER TABLE "users_lobbies" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE;
+ALTER TABLE "lobby_members" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE;
 
-ALTER TABLE "users_lobbies" ADD FOREIGN KEY ("lobby_id") REFERENCES "lobbies" ("id") ON DELETE CASCADE;
+ALTER TABLE "lobby_members" ADD FOREIGN KEY ("lobby_id") REFERENCES "lobbies" ("id") ON DELETE CASCADE;
 
 ALTER TABLE "lobbies" ADD FOREIGN KEY ("tracking_id") REFERENCES "tracking" ("id") ON DELETE CASCADE;
 

@@ -13,7 +13,18 @@ export default class LobbyController {
     console.log(`Init: ${this.path}`);
 
     this.router.get("/list", authenticateToken, async (req, res) => {
+      console.log("ran");
       res.send(await this.lobbyService.getLobbiesData((req as any).user.id));
+    });
+
+    this.router.get("/members", authenticateToken, async (req, res) => {
+      res.send(
+        await this.lobbyService.getMembersList(Number(req.query.lobbyID))
+      );
+    });
+
+    this.router.get("/test", async (req, res) => {
+      res.send("yo");
     });
 
     this.router.post("/create", authenticateToken, async (req, res) => {
@@ -34,7 +45,14 @@ export default class LobbyController {
       );
     });
 
-    this.router.post("/leave", async (req, res) => {});
+    this.router.post("/leave", authenticateToken, async (req, res) => {
+      res.send(
+        await this.lobbyService.leaveLobby(
+          req.body.lobbyID,
+          (req as any).user.id
+        )
+      );
+    });
 
     this.router.post("/join", authenticateToken, async (req, res) => {
       res.send(

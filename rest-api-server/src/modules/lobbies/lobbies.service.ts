@@ -14,13 +14,13 @@ export default class LobbyService {
         with inserted_tracking_init as (
             insert into tracking(created_at, updated_at) values (now(), now()) returning *), 
         lob as (
-          insert into lobbies (tracking_id, name, user_id, unique_join_code, created_at, updated_at) 
-          select id, ${name}, ${userID}, ${shortid.generate()}, now(), now()
+          insert into lobbies (tracking_id, name, unique_join_code, created_at, updated_at) 
+          select id, ${name}, ${shortid.generate()}, now(), now()
           from inserted_tracking_init returning id
         ),
         users_lobbies as (
-          insert into users_lobbies(user_id, lobby_id, created_at, updated_at)
-          select ${userID}, id, now(), now()
+          insert into lobby_members(user_id, lobby_id, owner, created_at, updated_at)
+          select ${userID}, id, true, now(), now()
           from lob
         )
 
@@ -42,7 +42,7 @@ export default class LobbyService {
 
     let insertUserToLobby = await this.pool.one(
       sql`
-        insert into users_lobbies(user_id, lobby_id, created_at, updated_at) values (${userID}, ${lobbyID}, now(), now()) returning updated_at
+        insert into lobby_members(user_id, lobby_id, owner, created_at, updated_at) values (${userID}, ${lobbyID}, false, now(), now()) returning updated_at
       `
     );
 
@@ -53,24 +53,40 @@ export default class LobbyService {
   }
 
   public async leaveLobby(lobbyID: number, userID: number) {
-    let removeFromLobby = await this.pool.one(
-      sql`
-        delete from user_lobbies where user_id=${userID} and lobby_id=${lobbyID}
-      `
-    );
+    try {
+      let res = await this.pool.query(
+        sql`
+          delete from lobby_members where user_id=${userID} and lobby_id=${lobbyID}
+        `
+      );
 
-    if (removeFromLobby)
-      return { message: "Successfully removed from the lobby" };
+      if (res.rowCount == 0) {
+        throw new Error();
+      }
+
+      return { message: "Sucessfully removed from lobby" };
+    } catch (_) {
+      return { error: "Could not remove from lobby" };
+    }
   }
 
   public async deleteLobby(lobbyID: number, userID: number) {
     let checkBelongs = await this.pool.maybeOne(
       sql`
-        select id, tracking_id from lobbies where id=${lobbyID} and user_id=${userID}
+        select 
+          tr.id as tracking_id
+        from 
+          lobby_members as lm
+          inner join lobbies as lb on lm.lobby_id=lb.id
+          inner join tracking as tr on lb.tracking_id=tr.id
+        where 
+          lb.id=${lobbyID} and lm.user_id=${userID} and lm.owner=true
       `
     );
 
     if (!checkBelongs) return { error: "Lobby does not belong to you" };
+
+    console.log(checkBelongs);
 
     let deletedLobbyData = await this.pool.query(
       sql`
@@ -85,10 +101,62 @@ export default class LobbyService {
 
   // returns name of lobbies the user is in
   // returns count of number of members in the lobby the user is in
-  // returns true or false on whether lobby is free to use drowsiness detection, one vacant spot per lobby
-  // returns whether user can track, if someone else is already using the drowsiness detection
+  // returns whether lobby is free to use drowsiness detection, one vacant spot per lobby
   public async getLobbiesData(userID: number) {
     // return lobbies;
+
+    let lobbyData = await this.pool.many(
+      sql`
+      select 
+        lobby_id,
+        member_count,
+        lobby_name,
+        lobby_owner,
+        user_tracking
+      from (
+        select 
+          lobbies.id as lobby_id,
+          lobbies.name as lobby_name,
+          lobby_members.owner as lobby_owner,
+          tracking.user_tracking as user_tracking
+        from 
+          lobby_members
+          inner join lobbies on lobby_members.lobby_id=lobbies.id
+          inner join tracking on lobbies.tracking_id=tracking.id
+        where lobby_members.user_id=${userID}
+      ) lobby_tracking inner join lateral(
+        -- for each lobby get member count
+        select 
+          count(id) as member_count
+        from 
+          lobby_members
+        where lobby_id=lobby_tracking.lobby_id
+      ) lobby_member_count ON true
+    `
+    );
+
+    return lobbyData;
+  }
+
+  public async getMembersList(lobbyID: number) {
+    let members = await this.pool.many(
+      sql`
+        select
+          cast(users.id as varchar(10)),
+          users.username,
+          tracking.user_tracking,
+          lobby_members.created_at
+        from
+          users
+          inner join lobby_members on users.id = lobby_members.user_id
+          inner join lobbies on lobby_members.lobby_id=lobbies.id
+          inner join tracking on lobbies.tracking_id = tracking.id
+        where
+          lobby_members.lobby_id=${lobbyID}
+      `
+    );
+
+    return members;
   }
 
   // checks if drowsiness detection in a given lobby is already being used by someone
