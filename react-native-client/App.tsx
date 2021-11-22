@@ -4,6 +4,7 @@ import { StyleSheet, Text, View, Button } from 'react-native';
 import Camera from './src/main/components/Camera';
 import LobbyRoom from './src/main/LobbyRoom/LobbyRooms';
 import LobbyMembers from './src/main/LobbyRoom/LobbyMembers';
+import NewLobbyForm from './src/main/components/NewLobbyForm';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 // import NavStacks from './src/main/components/NavStacks';
@@ -25,6 +26,7 @@ export default function App() {
       <Stack.Navigator>
         <Stack.Screen name="Home" options={{orientation: 'portrait'}} component={HomeScreen}  />
         <Stack.Screen name="Lobby" options={{orientation: 'portrait', contentStyle: {backgroundColor: '#A9A9A9'}}} component={LobbyRoom}/>
+        <Stack.Screen name="NewLobbyForm" options={{orientation: 'portrait'}} component={NewLobbyForm}  />
         <Stack.Screen name="Driver" options={{title: "Driving mode on"}} component={Camera} initialParams={{'authenticated':true}}/>
         <Stack.Screen name="Members" options={{title: "Lobby members", orientation: 'portrait', contentStyle: {backgroundColor: '#A9A9A9'}}} component={LobbyMembers}/>
       </Stack.Navigator>

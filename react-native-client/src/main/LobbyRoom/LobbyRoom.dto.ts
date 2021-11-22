@@ -1,6 +1,7 @@
 export class LobbyRoomState {
   refresh: boolean;
   items: LobbyItem[];
+  displayText: string;
 }
 
 interface LobbyItem {

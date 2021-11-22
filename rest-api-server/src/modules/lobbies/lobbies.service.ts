@@ -9,6 +9,19 @@ export default class LobbyService {
   private pool = getPool();
 
   public async createLobby(name: string, userID: number) {
+    let checkExists = await this.pool.maybeOne(sql`
+      select 
+        lobbies.id 
+      from 
+        lobby_members 
+        inner join lobbies on lobby_members.lobby_id=lobbies.id
+      where 
+        lobbies.name=${name} and lobby_members.user_id=${userID} and lobby_members.owner=true 
+    `);
+
+    if (checkExists)
+      return { error: "You already have a lobby created under this name" };
+
     let insertedLobby = await this.pool.any(
       sql`
         with inserted_tracking_init as (
@@ -31,18 +44,30 @@ export default class LobbyService {
     return insertedLobby;
   }
 
-  public async joinLobby(lobbyID: number, userID: number) {
+  public async joinLobby(joinCode: string, userID: number) {
+    let checkLobbyExists = await this.pool.maybeOne(sql`
+      select id from lobbies where unique_join_code=${joinCode}
+    `);
+
+    if (!checkLobbyExists) return { error: "Lobby join code does not exist" };
+
     let exists = await this.pool.maybeOne(
       sql`
-        select id, created_at from lobbies where id=${lobbyID}
+        select 
+          lobbies.id, lobbies.created_at 
+        from 
+          lobby_members 
+          inner join lobbies on lobby_members.lobby_id=lobbies.id
+        where 
+          lobbies.unique_join_code=${joinCode} and lobby_members.user_id=${userID} and lobby_members.owner = false
       `
     );
 
-    if (!exists) return { error: "Lobby does not exist" };
+    if (!exists) return { error: "Aready in the lobby of given join code" };
 
     let insertUserToLobby = await this.pool.one(
       sql`
-        insert into lobby_members(user_id, lobby_id, owner, created_at, updated_at) values (${userID}, ${lobbyID}, false, now(), now()) returning updated_at
+        insert into lobby_members(user_id, lobby_id, owner, created_at, updated_at) values (${userID}, ${checkLobbyExists.id}, false, now(), now()) returning updated_at
       `
     );
 
@@ -86,8 +111,6 @@ export default class LobbyService {
 
     if (!checkBelongs) return { error: "Lobby does not belong to you" };
 
-    console.log(checkBelongs);
-
     let deletedLobbyData = await this.pool.query(
       sql`
         delete from tracking where id=${checkBelongs.tracking_id} 
@@ -104,6 +127,19 @@ export default class LobbyService {
   // returns whether lobby is free to use drowsiness detection, one vacant spot per lobby
   public async getLobbiesData(userID: number) {
     // return lobbies;
+
+    let foundLobbies = await this.pool.query(
+      sql`
+        select 
+          id 
+        from 
+          lobby_members
+        where
+          lobby_members.user_id= ${userID}
+      `
+    );
+
+    if (foundLobbies.rows.length == 0) return [];
 
     let lobbyData = await this.pool.many(
       sql`
@@ -157,6 +193,40 @@ export default class LobbyService {
     );
 
     return members;
+  }
+
+  public async removeUser(
+    lobbyID: number,
+    userToRemove: number,
+    ownerOfLobbyUser: number
+  ) {
+    let checkOwner = await this.pool.maybeOne(
+      sql`
+        select 
+          id 
+        from 
+          lobby_members 
+        where 
+          lobby_id=${lobbyID} and user_id=${ownerOfLobbyUser} and owner=true
+      `
+    );
+
+    if (!checkOwner)
+      return {
+        error: "Cannot remove user, you are not the owner of the lobby",
+      };
+
+    let removeUser = await this.pool.one(
+      sql`
+        delete 
+        from 
+          lobby_members 
+        where 
+          user_id=${userToRemove} and lobby_id=${lobbyID}
+      `
+    );
+
+    return { message: "Successfully removed user" };
   }
 
   // checks if drowsiness detection in a given lobby is already being used by someone

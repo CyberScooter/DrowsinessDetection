@@ -23,10 +23,6 @@ export default class LobbyController {
       );
     });
 
-    this.router.get("/test", async (req, res) => {
-      res.send("yo");
-    });
-
     this.router.post("/create", authenticateToken, async (req, res) => {
       res.send(
         await this.lobbyService.createLobby(
@@ -36,7 +32,18 @@ export default class LobbyController {
       );
     });
 
+    this.router.post("/remove", authenticateToken, async (req, res) => {
+      res.send(
+        await this.lobbyService.removeUser(
+          req.body.lobbyID,
+          req.body.userID,
+          (req as any).user.id
+        )
+      );
+    });
+
     this.router.post("/delete", authenticateToken, async (req, res) => {
+      console.log("ran");
       res.send(
         await this.lobbyService.deleteLobby(
           req.body.lobbyID,
@@ -57,7 +64,7 @@ export default class LobbyController {
     this.router.post("/join", authenticateToken, async (req, res) => {
       res.send(
         await this.lobbyService.joinLobby(
-          req.body.lobbyID,
+          req.body.joinCode,
           (req as any).user.id
         )
       );

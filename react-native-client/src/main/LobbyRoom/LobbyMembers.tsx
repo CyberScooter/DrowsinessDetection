@@ -23,10 +23,7 @@ export default function LobbyMembers({route}) {
     //   console.log(response.data);
     // };
 
-    useEffect(()=> {
-
-      console.log(route.params?.lobbyID);
-
+    async function loadMembers(){
       let items = []
       let token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MX0.BhcT-kWzUAwZzQ55XGnUpGZKuMf2dlWL3u9jvgfhWss"
       axios.get(`${restAPIURL}/api/lobby/members?lobbyID=${route.params?.lobbyID}`, {
@@ -51,10 +48,22 @@ export default function LobbyMembers({route}) {
 
           setItems(items)
         })
-        
+    }
+
+    useEffect(()=> {
+      loadMembers()
     }, [])
 
-    async function removeUser(id){
+    async function removeUser(lobbyID, userID){
+      let token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MX0.BhcT-kWzUAwZzQ55XGnUpGZKuMf2dlWL3u9jvgfhWss"
+      let res = await axios.post(`${restAPIURL}/api/lobby/remove`, {lobbyID: lobbyID, userID: userID},{
+          headers: {
+            Authorization: 'Bearer ' + token //the token is a variable which holds the token
+          }
+      })
+
+      loadMembers()
+
 
     }
       
@@ -63,44 +72,48 @@ export default function LobbyMembers({route}) {
 
     if(Items.length > 0){
       flatList = (
-        <FlatList
-          data={Items}
-          renderItem={({item}) => {
-            if(route.params.owner) {
-              currentlyDrivingComponent = null
-              if(item.id == driving) currentlyDrivingComponent = <Text>Currently driving</Text>;
-              return (
-                <View style={styles.item}>
-                  <Text style={styles.title}>{item.user}</Text>
-                  <Button color="darkred" title="Remove User" onPress={() => removeUser(item.id)}/>
-                  {currentlyDrivingComponent}
-                </View>
-              )
-            }else {
-              currentlyDrivingComponent = null
-              if(item.id == driving) currentlyDrivingComponent = <Text>Currently driving</Text>;
-              return (
-                <View style={styles.item}>
-                  <Text style={styles.title}>{item.user}</Text>
-                  {currentlyDrivingComponent}
-                </View>
-              )
-            }
-          }}
-        />
+        <View>
+          <View style={styles.item}>
+            <Text style={styles.title}>Members:</Text>
+          </View>
+          <FlatList
+            data={Items}
+            renderItem={({item}) => {
+              if(route.params.owner != item.id) {
+                currentlyDrivingComponent = null
+                if(item.id == driving) currentlyDrivingComponent = <Text>Currently driving</Text>;
+                return (
+                  <View style={styles.item}>
+                    <Text style={styles.title}>{item.user}</Text>
+                    <Button color="darkred" title="Remove Member" onPress={() => removeUser(route.params?.lobbyID, item.id)}/>
+                    {currentlyDrivingComponent}
+                  </View>
+                )
+              }else {
+                currentlyDrivingComponent = null
+                if(item.id == driving) currentlyDrivingComponent = <Text>Currently driving</Text>;
+                return (
+                  <View style={styles.item}>
+                    <Text style={styles.title}>{item.user}</Text>
+                    {currentlyDrivingComponent}
+                  </View>
+                )
+              }
+            }}
+          />
+        </View>
       )
     }else {
       flatList = (
-        <Text style={styles.loading}>Loading members...</Text>
+        <View style={styles.item}>
+          <Text style={styles.title}>~ Loading Members ~</Text>
+        </View>
       )
     }
  
     return (
       
       <SafeAreaView style={styles.container}>
-        <View style={styles.item}>
-          <Text style={styles.title}>Members</Text>
-        </View>
         {flatList}
       </SafeAreaView>
     );
@@ -129,8 +142,4 @@ const styles = StyleSheet.create({
       color: 'white',
       fontWeight: 'bold'
     },
-    loading: {
-      fontSize: 20,
-      color: 'red'
-    }
   });
