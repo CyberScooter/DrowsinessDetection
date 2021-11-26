@@ -7,26 +7,27 @@ import axios from 'axios'
 let token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MX0.BhcT-kWzUAwZzQ55XGnUpGZKuMf2dlWL3u9jvgfhWss"
 
 export default function NewLobbyForm ({navigation}) {
-  const { register, handleSubmit, setValue } = useForm();
+
+
+
+  const { register, handleSubmit, setValue, reset} = useForm();
   const [apiResponse, setApiResponse] = React.useState("")
 
   const onSubmitJoin = useCallback( async formData => {
     if(formData.lobbyJoinCode) {
-        console.log("ran");
         let res = await axios.post(`${restAPIURL}/api/lobby/join`, {joinCode: formData.lobbyJoinCode, userID: 1},{
             headers: {
               Authorization: 'Bearer ' + token //the token is a variable which holds the token
             }
         })
 
-
         if(res.data.error){
             setApiResponse(res.data.error)
-        }
+        }else {
+          navigation.navigate("Lobby")
 
-        // console.log(formData.lobbyName);
+        }
     }
-    navigation.navigate("Lobby")
 
   }, []);
 
@@ -40,12 +41,12 @@ export default function NewLobbyForm ({navigation}) {
 
         if(res.data.error){
             setApiResponse(res.data.error)
+        }else {
+          navigation.navigate("Lobby");
         }
 
-        console.log(formData.lobbyName);
     }
 
-    navigation.navigate("Lobby")
   }, []);
 
 
@@ -70,6 +71,7 @@ export default function NewLobbyForm ({navigation}) {
             <TextInput
             placeholder="Enter lobby name"
             onChangeText={onChangeField('lobbyName')}
+
             />
         </View>
       {/* <TextInput
@@ -84,6 +86,7 @@ export default function NewLobbyForm ({navigation}) {
             <TextInput
             placeholder="Enter join code"
             onChangeText={onChangeField('lobbyJoinCode')}
+            clearButtonMode='always'
             />
         </View>
         <Button title="Join lobby" onPress={handleSubmit(onSubmitJoin)} />

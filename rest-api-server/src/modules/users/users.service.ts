@@ -27,8 +27,6 @@ export default class UserService {
         `
       );
 
-      console.log(insertedEARRow);
-
       const salt = genSaltSync(10);
       const hash = hashSync(user.password, salt);
 
@@ -50,7 +48,6 @@ export default class UserService {
         ),
       };
     } catch (e) {
-      console.log(e);
       return { error: "Internal server error" };
     }
   }

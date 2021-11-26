@@ -12,7 +12,6 @@ export default class UserController {
   private initialiseRoutes() {
     console.log(`Init: ${this.path}`);
     this.router.post("/register", async (req, res) => {
-      console.log(req.body);
       let userRegistration = await this.userService.userRegistration(req.body);
 
       if (userRegistration.error == "Internal server error")

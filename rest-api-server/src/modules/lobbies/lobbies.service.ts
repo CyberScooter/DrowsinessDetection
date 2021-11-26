@@ -8,6 +8,12 @@ import * as shortid from "shortid";
 export default class LobbyService {
   private pool = getPool();
 
+  constructor() {
+    shortid.characters(
+      "0123456789abcdefghjkmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@#!"
+    );
+  }
+
   public async createLobby(name: string, userID: number) {
     let checkExists = await this.pool.maybeOne(sql`
       select 
@@ -63,7 +69,7 @@ export default class LobbyService {
       `
     );
 
-    if (!exists) return { error: "Aready in the lobby of given join code" };
+    if (exists) return { error: "Aready in the lobby of given join code" };
 
     let insertUserToLobby = await this.pool.one(
       sql`
@@ -147,12 +153,16 @@ export default class LobbyService {
         lobby_id,
         member_count,
         lobby_name,
+        created_at,
+        join_code,
         lobby_owner,
         user_tracking
       from (
         select 
           lobbies.id as lobby_id,
           lobbies.name as lobby_name,
+          lobby_members.created_at as created_at,
+          lobbies.unique_join_code as join_code,
           lobby_members.owner as lobby_owner,
           tracking.user_tracking as user_tracking
         from 
@@ -160,6 +170,7 @@ export default class LobbyService {
           inner join lobbies on lobby_members.lobby_id=lobbies.id
           inner join tracking on lobbies.tracking_id=tracking.id
         where lobby_members.user_id=${userID}
+        order by created_at desc
       ) lobby_tracking inner join lateral(
         -- for each lobby get member count
         select 
@@ -168,6 +179,7 @@ export default class LobbyService {
           lobby_members
         where lobby_id=lobby_tracking.lobby_id
       ) lobby_member_count ON true
+      
     `
     );
 

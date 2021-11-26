@@ -5,17 +5,22 @@ import {restAPIURL} from '../../../env'
 import axios from 'axios'
 import NewLobbyForm from "../components/NewLobbyForm";
 
+
 import { useNavigation } from '@react-navigation/native';
 
-
+let fromNewLobbyForm = false
 export default class LobbyRoom extends Component {
   
-   state: LobbyRoomState = {
+   state = {
      refresh: false,
      items: [],
      displayText: ''
-
    }
+
+    updateData = data => {
+
+      if(data) this.loadLobbies()
+    };
 
    async loadLobbies(){
     let items = []
@@ -34,7 +39,7 @@ export default class LobbyRoom extends Component {
 
         items = res.data.map((el) => {
 
-          let data: any = [{
+          let data = [{
             id: "numberOfMembers",
             count: el.member_count
           }]
@@ -80,13 +85,26 @@ export default class LobbyRoom extends Component {
 
    }
 
+   async componentDidUpdate(){
+     console.log(this.props.params?.refreshT);
+     if(this.props.params?.refreshT){
+       this.setState({displayText: "~ Loading lobbies ~"})
+       this.loadLobbies()
+     }
+   }
 
    async componentDidMount(){
+    //  console.log(this.props.route.params);
+      const {navigation,route}=this.props
+      /* 2. Get the param */
+      // console.log(route.params);
      this.setState({displayText: "~ Loading lobbies ~"})
      this.loadLobbies()
    
-
    }
+    componentWillUnmount() {
+      console.log("ran");
+    }
    
 
    async trackDriver(userID) {
@@ -119,7 +137,7 @@ export default class LobbyRoom extends Component {
 
    }
 
-   async leaveLobby(lobbyID: number){
+   async leaveLobby(lobbyID){
       let token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MX0.BhcT-kWzUAwZzQ55XGnUpGZKuMf2dlWL3u9jvgfhWss"
       let res = await axios.post(`${restAPIURL}/api/lobby/leave`, {lobbyID: lobbyID},{
           headers: {
@@ -139,14 +157,22 @@ export default class LobbyRoom extends Component {
    }
 
     render() {
-
       let loading;
 
       if(this.state.items.length == 0){
         loading = (
-          <View style={styles.titleButtons}>
+          <View>
+            <View style={styles.titleButtons}>
+              <Text style={styles.pageTitle}>Lobbies</Text>
+              <View style={{marginBottom: 10}}>
+                <Button color="coral"  title="Create/join lobby" 
+                  onPress={() => {
+                    this.props.navigation.navigate({name: "NewLobbyForm", params: {userID: 3}})
+                  }}/>
+              </View>
+              <Button color="blue" title="Refresh" onPress={() => {this.loadLobbies()}}/>
+            </View>
             <Text style={styles.pageTitle}>{this.state.displayText}</Text>
-            <Button color="blue" title="Refresh" onPress={() => {this.loadLobbies()}}/>
           </View>
         )
       }else {
@@ -155,7 +181,10 @@ export default class LobbyRoom extends Component {
           <View style={styles.titleButtons}>
             <Text style={styles.pageTitle}>Lobbies</Text>
             <View style={{marginBottom: 10}}>
-              <Button color="coral"  title="Create/join lobby" onPress={() => this.props.navigation.navigate({name: "NewLobbyForm", params: {userID: 3}})}/>
+              <Button color="coral"  title="Create/join lobby" 
+                onPress={() => {
+                  this.props.navigation.navigate({name: "NewLobbyForm", params: {userID: 3}})
+              }}/>
             </View>
             <Button color="blue" title="Refresh" onPress={() => {this.loadLobbies()}}/>
           </View>

@@ -13,7 +13,6 @@ export default class LobbyController {
     console.log(`Init: ${this.path}`);
 
     this.router.get("/list", authenticateToken, async (req, res) => {
-      console.log("ran");
       res.send(await this.lobbyService.getLobbiesData((req as any).user.id));
     });
 
@@ -43,7 +42,6 @@ export default class LobbyController {
     });
 
     this.router.post("/delete", authenticateToken, async (req, res) => {
-      console.log("ran");
       res.send(
         await this.lobbyService.deleteLobby(
           req.body.lobbyID,

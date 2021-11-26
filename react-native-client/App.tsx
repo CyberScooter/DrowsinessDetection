@@ -2,7 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { StyleSheet, Text, View, Button } from 'react-native';
 import Camera from './src/main/components/Camera';
-import LobbyRoom from './src/main/LobbyRoom/LobbyRooms';
+import LobbyRoom from './src/main/LobbyRoom/LobbyRoom';
 import LobbyMembers from './src/main/LobbyRoom/LobbyMembers';
 import NewLobbyForm from './src/main/components/NewLobbyForm';
 import { NavigationContainer } from '@react-navigation/native';
@@ -15,7 +15,7 @@ function HomeScreen({navigation}) {
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#A9A9A9'}}>
       <Button title="Go to camera" onPress={() => {navigation.navigate("Driver")}}/>
-      <Button title="Driver drowsiness detection lobby room" onPress={() => {navigation.navigate("Lobby")}} />
+      <Button title="Driver drowsiness detection lobby room" onPress={() => {navigation.navigate("Lobby", {authenticated: true})}} />
     </View>
   );
 }
