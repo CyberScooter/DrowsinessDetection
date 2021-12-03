@@ -3,18 +3,16 @@ import { StyleSheet, Text, View, SafeAreaView, SectionList, StatusBar, Button } 
 import { FlatList } from "react-native-gesture-handler";
 import {restAPIURL} from '../../../env'
 import axios from 'axios'
+import {loadJWT} from '../services/deviceStorage'
 
 let driving= 3;
 
 export default function LobbyRoomsFC({route, navigation}) {
     const [items, setItems] = React.useState({items: [], displayText: ''})
-
-    // useEffect(() => {
-    //   loadLobbies()
-
-    // }, [])
+    const [userData, setUserData] = React.useState({id: 0, token: ""})
 
     useEffect(() => {
+
       const unsubscribe = navigation.addListener('focus', () => {
         setItems({displayText: "~ Loading lobbies ~", items: []})
         loadLobbies()
@@ -25,8 +23,17 @@ export default function LobbyRoomsFC({route, navigation}) {
     }, [navigation]);
 
     async function loadLobbies(){
+      let token = await loadJWT("jwtKey")
+      let {data} = await axios.get(`${restAPIURL}/api/user/data`,{
+        headers: {
+          Authorization: 'Bearer ' + token //the token is a variable which holds the token
+        }
+      })
+
+      setUserData({id: data.user.id, token: token})
+
       let items = []
-      let token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MX0.BhcT-kWzUAwZzQ55XGnUpGZKuMf2dlWL3u9jvgfhWss"
+
       axios.get(`${restAPIURL}/api/lobby/list`,{
           headers: {
             Authorization: 'Bearer ' + token //the token is a variable which holds the token
@@ -88,7 +95,7 @@ export default function LobbyRoomsFC({route, navigation}) {
      }
 
     async function deleteLobby(lobbyID) {
-      let token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MX0.BhcT-kWzUAwZzQ55XGnUpGZKuMf2dlWL3u9jvgfhWss"
+      let token = await loadJWT("jwtKey") 
       let res = await axios.post(`${restAPIURL}/api/lobby/delete`, {lobbyID: lobbyID},{
           headers: {
             Authorization: 'Bearer ' + token //the token is a variable which holds the token
@@ -106,7 +113,7 @@ export default function LobbyRoomsFC({route, navigation}) {
      }
   
      async function leaveLobby(lobbyID){
-        let token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MX0.BhcT-kWzUAwZzQ55XGnUpGZKuMf2dlWL3u9jvgfhWss"
+        let token = await loadJWT("jwtKey")
         let res = await axios.post(`${restAPIURL}/api/lobby/leave`, {lobbyID: lobbyID},{
             headers: {
               Authorization: 'Bearer ' + token //the token is a variable which holds the token
@@ -180,7 +187,7 @@ export default function LobbyRoomsFC({route, navigation}) {
       }else if(item.lobbyInactive){
         return (
           <View style={styles.mainButtons}>
-            <Button color="green" title="Become a driver" onPress={() => navigation.navigate({name: "Driver", params: {userID: 3}})}/>
+            <Button color="green" title="Become a driver" onPress={() => navigation.navigate({name: "Driver", params: {userID: userData.id}})}/>
           </View>
         )
       }else if (item.lobbyDelete) {

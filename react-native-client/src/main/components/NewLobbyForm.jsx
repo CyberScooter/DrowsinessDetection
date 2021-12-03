@@ -3,8 +3,7 @@ import { View, TextInput, Button, StyleSheet, Text } from 'react-native';
 import { useForm } from 'react-hook-form';
 import {restAPIURL} from '../../../env'
 import axios from 'axios'
-
-let token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MX0.BhcT-kWzUAwZzQ55XGnUpGZKuMf2dlWL3u9jvgfhWss"
+import {loadJWT} from '../services/deviceStorage'
 
 export default function NewLobbyForm ({navigation}) {
 
@@ -15,6 +14,7 @@ export default function NewLobbyForm ({navigation}) {
 
   const onSubmitJoin = useCallback( async formData => {
     if(formData.lobbyJoinCode) {
+        let token = await loadJWT("jwtKey")
         let res = await axios.post(`${restAPIURL}/api/lobby/join`, {joinCode: formData.lobbyJoinCode, userID: 1},{
             headers: {
               Authorization: 'Bearer ' + token //the token is a variable which holds the token
@@ -33,6 +33,7 @@ export default function NewLobbyForm ({navigation}) {
 
   const onSubmitCreate = useCallback(async formData => {
     if(formData.lobbyName) {
+        let token = await loadJWT("jwtKey")
         let res = await axios.post(`${restAPIURL}/api/lobby/create`, {lobbyName: formData.lobbyName, userID: 1},{
             headers: {
               Authorization: 'Bearer ' + token //the token is a variable which holds the token

@@ -228,7 +228,7 @@ export default class LobbyService {
         error: "Cannot remove user, you are not the owner of the lobby",
       };
 
-    let removeUser = await this.pool.one(
+    let removeUser = await this.pool.query(
       sql`
         delete 
         from 
@@ -238,7 +238,7 @@ export default class LobbyService {
       `
     );
 
-    return { message: "Successfully removed user" };
+    if (removeUser) return { message: "Successfully removed user" };
   }
 
   // checks if drowsiness detection in a given lobby is already being used by someone

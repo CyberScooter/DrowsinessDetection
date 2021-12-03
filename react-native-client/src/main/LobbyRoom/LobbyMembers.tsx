@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, SafeAreaView, SectionList, StatusBar, Button } 
 import { FlatList } from "react-native-gesture-handler";
 import {restAPIURL} from '../../../env'
 import axios from 'axios'
+import { loadJWT} from '../services/deviceStorage'
 
 let driving= 3;
 
@@ -16,6 +17,8 @@ export default function LobbyMembers({route}) {
     // ])
     const [Items, setItems] = React.useState([])
     const [init, setInit] = React.useState(false)
+    const [driverID, setDriverID] = React.useState(0)
+
 
     // const fetchUser = async () => {
     //   const url = `http://localhost:3002/api/lobby/members`;
@@ -25,7 +28,7 @@ export default function LobbyMembers({route}) {
 
     async function loadMembers(){
       let items = []
-      let token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MX0.BhcT-kWzUAwZzQ55XGnUpGZKuMf2dlWL3u9jvgfhWss"
+      let token = await loadJWT("jwtKey")
       axios.get(`${restAPIURL}/api/lobby/members?lobbyID=${route.params?.lobbyID}`, {
         headers: {
           Authorization: 'Bearer ' + token //the token is a variable which holds the token
@@ -35,7 +38,7 @@ export default function LobbyMembers({route}) {
 
           if(res.data.length == 0) return;
 
-          driving = res.data[0].user_tracking
+          setDriverID(res.data[0].user_tracking)
 
           items = res.data.map((el) => {
 
@@ -55,14 +58,19 @@ export default function LobbyMembers({route}) {
     }, [])
 
     async function removeUser(lobbyID, userID){
-      let token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MX0.BhcT-kWzUAwZzQ55XGnUpGZKuMf2dlWL3u9jvgfhWss"
-      let res = await axios.post(`${restAPIURL}/api/lobby/remove`, {lobbyID: lobbyID, userID: userID},{
+      let token = await loadJWT("jwtKey")
+      await axios.post(`${restAPIURL}/api/lobby/remove`, {lobbyID: lobbyID, userID: userID},{
           headers: {
             Authorization: 'Bearer ' + token //the token is a variable which holds the token
           }
+      }).then(() => {
+
+        console.log("yo");
+        let arr = Items.filter((el) => el.id != userID)
+
+        setItems(arr)
       })
 
-      loadMembers()
 
 
     }
@@ -79,9 +87,9 @@ export default function LobbyMembers({route}) {
           <FlatList
             data={Items}
             renderItem={({item}) => {
-              if(route.params.owner != item.id) {
+              if(route.params.owner == item.id) {
                 currentlyDrivingComponent = null
-                if(item.id == driving) currentlyDrivingComponent = <Text>Currently driving</Text>;
+                if(item.id == driverID) currentlyDrivingComponent = <Text>Currently driving</Text>
                 return (
                   <View style={styles.item}>
                     <Text style={styles.title}>{item.user}</Text>
@@ -91,10 +99,10 @@ export default function LobbyMembers({route}) {
                 )
               }else {
                 currentlyDrivingComponent = null
-                if(item.id == driving) currentlyDrivingComponent = <Text>Currently driving</Text>;
+                if(item.id == driverID) currentlyDrivingComponent = <Text>Currently driving</Text>
                 return (
                   <View style={styles.item}>
-                    <Text style={styles.title}>{item.user}</Text>
+                    <Text style={styles.title}>{item.user} - Lobby Owner</Text>
                     {currentlyDrivingComponent}
                   </View>
                 )

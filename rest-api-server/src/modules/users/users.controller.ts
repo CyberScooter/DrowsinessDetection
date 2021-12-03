@@ -17,15 +17,6 @@ export default class UserController {
       if (userRegistration.error == "Internal server error")
         return res.status(500).json(userRegistration);
 
-      if (!!!userRegistration.error) {
-        res.cookie("sessionid", userRegistration.token, {
-          maxAge: 60 * 60 * 24 * 5 * 1000,
-          httpOnly: true,
-        });
-
-        delete userRegistration.token;
-      }
-
       return res.status(200).send(userRegistration);
     });
 
@@ -34,15 +25,6 @@ export default class UserController {
 
       if (userLogin.error == "Internal server error")
         return res.status(500).json(userLogin);
-
-      if (!!!userLogin.error) {
-        res.cookie("sessionid", userLogin.token, {
-          maxAge: 60 * 60 * 24 * 5 * 1000,
-          httpOnly: true,
-        });
-
-        delete userLogin.token;
-      }
 
       return res.status(200).json(userLogin);
     });

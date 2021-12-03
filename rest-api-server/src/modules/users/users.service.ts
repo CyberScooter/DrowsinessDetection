@@ -64,14 +64,15 @@ export default class UserService {
       );
       if (userFound === null) return { error: "User does not exist" };
 
-      const match = await compare(user.password, userFound.password);
+      const match = await compare(user.password, userFound.hash);
       delete userFound.hash;
 
-      if (match)
+      if (match) {
         return {
           user: userFound,
           token: this.generateToken({ id: userFound.id }, { expiresIn: "7d" }),
         };
+      }
 
       return { error: "Password does not match" };
     } catch (_) {
@@ -83,6 +84,7 @@ export default class UserService {
     const user = (await this.pool.one(
       sql`select * from users where id = ${userId}`
     )) as any;
+    delete user.hash;
     return { user, error: null };
   }
 }
