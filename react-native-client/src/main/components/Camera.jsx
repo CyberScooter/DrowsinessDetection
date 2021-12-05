@@ -22,87 +22,158 @@ import * as jpeg from 'jpeg-js';
 import base64 from 'react-native-base64'
 import * as Permissions from 'expo-permissions';
 import useForceUpdate from 'use-force-update';
+import {flaskURL, restAPIURL} from '../../../env'
+import { PermissionsAndroid } from 'react-native';
+import axios from 'axios';
+import {loadJWT} from '../services/deviceStorage'
+
 // import {initiateSocket, disconnectSocket, sendFrame} from './FrameCaptureSocket'
 
 let instances = 0;
 let frameCount = 0;
 let userID;
-const socket = io("https://9759-86-24-137-183.ngrok.io" , {reconnection: false});
+let drowsyAlert = false;
+let longitude = 0;
+let latitude = 0
+let socket;
+
 
 export default function CameraComponent({route}) {  
 
   const netInfo = useNetInfo()
 
+  
+
   const [camera, startCamera] = useState(false)
-  const [socketInit, setSocketInit] = useState(false)
   const [refreshCamera, setRefreshCamera] = useState(0)
   const [permissions, setPermissions] = useState("")
+  const [displayText, setDisplayText] = useState("")
+  const [showStartCapture, setStartCapture] = useState(false)
 
   const TensorCamera = cameraWithTensors(Camera);
 
   useEffect( () => {
+    let mounted = true 
+
+    if(route.params.occupiedID){
+      init = true
+      setStartCapture(true)
+    }
     
     const fetchData = async () => {
       await tf.ready();
       const camera = await Camera.requestPermissionsAsync()
       const location = await Location.requestForegroundPermissionsAsync();
+      await Location.getCurrentPositionAsync({}).catch(() => {
+        setPermissions("Camera permission not enabled, enable to use the drowsiness detection")
+      })
       if (camera.status !== 'granted') {
           setPermissions("Camera permission not enabled, enable to use the drowsiness detection")
-      }else if(location.status !== 'granted'){
+      }
+      if(location.status !== 'granted'){
           setPermissions("Location permission not enabled, enable to use the drowsiness detection")
+      }
+
+    }
+
+    if(camera) {
+      console.log("asdl;fkaposkfpoask");
+      fetchData();
+
+      // socket = io(flaskURL , {reconnection: true});
+      socket = io(flaskURL, {reconnection: false});
+      if(!socket.hasListeners('frameAnalysis')){
+        socket.addEventListener("frameAnalysis", async function (event) {
+          if(instances == 2) {
+            instances = 0;
+            
+            let location;
+            location = await Location.getCurrentPositionAsync({});
+            longitude = location.coords.longitude
+            latitude = location.coords.latitude
+            drowsyAlert = true
+            startCamera(false)
+
+              
+  
+
+          }
+  
+          if (event === undefined) {
+            return;
+          }
+  
+          if (event == "DROWSY" || event == "DEAD") {
+            frameCount++;
+          } else {
+            frameCount = 0;
+          }
+  
+          if (frameCount >= 3) {
+            console.log(event);
+            frameCount = 0;
+            instances++;
+            return
+          } 
+        });
+      }
+    }else {
+      if(drowsyAlert){
+        updateLocation(longitude, latitude)
+        longitude = 0
+        latitude = 0
+        drowsyAlert = false
+    
+        setDisplayText("Park your car, drowsy")
+
+
+
       }
     }
 
-    if(!socketInit) {
-      // userID = route.params.userID
-      socket.on("connect", (e) => { console.log(e) });
+    // if(!camera) {
+    //   if(!!socket){
+    //     console.log(socket);
+    //     if(socket.connected){
+    //       socket.close()
+    //     }
+    //   }
+      
+    // }
 
-      setSocketInit(true)
-      fetchData();
+
+    return () => {
+      // prevent memory leaks
+        mounted = false 
+    }
+    // if(!socketInit) {
+      // console.log(route.params.lobbyID);
+      
+      // userID = route.params.userID
+      // socket.on("connect", (e) => { console.log(e) });
+
+      // fetchData();
+
+      // socketInit = true
       // return
 
-      socket.addEventListener("frameAnalysis", async function (event) {
-        if(instances == 2) {
-          let location;
-          try{
-            location = await Location.getCurrentPositionAsync({});
+      
+    // }
 
-            // REST API request location.latitude, location.longitude
-          }catch(_){
+  }, [camera])
 
-          }
-          console.log(location);
-          instances = 0;
-          return
+  async function updateLocation(longitude, latitude){
+    let token = await loadJWT("jwtKey") 
+    console.log("lol")
+    await axios.post(`${restAPIURL}/api/tracker/updateLocation`, {longitude: longitude, latitude: latitude, lobbyID: route.params.lobbyID},{
+        headers: {
+          Authorization: 'Bearer ' + token //the token is a variable which holds the token
         }
+    })
 
-        if (event === undefined) {
-          return;
-        }
+  }
 
-        if (event == "DROWSY" || event == "DEAD") {
-          frameCount++;
-        } else {
-          frameCount = 0;
-        }
-
-        if (frameCount >= 3) {
-          console.log(event);
-          frameCount = 0;
-          instances++;
-          return
-        } 
-      });
-    }
-
-
-
-
-
-  })
-
-
-  const handleCameraStream = (imageAsTensors , updatePreview, gl) => {
+  const handleCameraStream = async (imageAsTensors , updatePreview, gl) => {
     const loop = async () => {
 
         try{
@@ -110,9 +181,11 @@ export default function CameraComponent({route}) {
 
           const data = await tensor.array()
 
-          socket.emit("frame", {
-              frame: data
-          });
+          if(!!socket)
+            socket.emit("frameCNNClassification", {
+                frame: data
+            });
+
 
           updatePreview();
           gl.endFrameEXP();
@@ -129,156 +202,43 @@ export default function CameraComponent({route}) {
   }
 
   if(camera) loop();
-    // const loop = async () => {
-    //   const tensor = await imageAsTensors.next().value
-
-    //   if(!repeat){
-    //     if(!!tensor){
-    //       const [height, width] = tensor.shape
-    //       const data = new Buffer(
-    //       // concat with an extra alpha channel and slice up to 4 channels to handle 3 and 4 channels tensors
-    //       tf.concat([tensor, tf.ones([height, width, 1]).mul(255)], [-1])
-    //           .slice([0], [height, width, 4])
-    //           .dataSync(),
-    //       )
-
-    //       const rawImageData = {data, width, height};
-    //       const jpegImageData = jpeg.encode(rawImageData, 200);
-
-    //       tempImgBase64 = tf.util.decodeString(jpegImageData.data, "base64")
-
-    //       if(tempImgBase64 == imgBase64){
-    //         // console.log("ran");
-    //         // repeat = true;
-    //       }
-    //       // console.log(repeat);
-
-    //       imgBase64 = tempImgBase64
-
-    //       // console.log(socket);
-    //       // socket.emit("frame", {
-    //       //   frame: tempImgBase64,
-    //       // });
-
-    //       // setTimeout(() => setBase64(imgBase64), 500)
-          
-    //       // console.log(encoded);
-
-    //       // tf.dispose([tensor]);
-
-
-    //       // let items = nextImageTensor.filter((item) => item !== 0 )
-    //       // console.log(items.length);
-    //       // const encoded = base64.encodeFromByteArray(nextImageTensor);
-    //       // console.log(encoded);
-    //       // await getPrediction(nextImageTensor);
-
-    //       await sleep(500)
-
-
-    //       requestAnimationFrame(loop);
-    //     }
-    //   }else {
-    //     repeat = false;
-    //     imgBase64 = "-1";
-    //     tempImgBase64 = "-2";
-    //     console.log("asdfasdfadf");
-    //     forceUpdate();
-    //   }
-
-    // };
-
-    // if(startCamera) loop()
-
-    // if(startCamera) {
-    //   if(repeat){
-    //     repeat = false;
-    //     console.log("asdfasdfadf");
-    //     setRefreshCamera(!refreshCamera)
-    //   }else {
-    //     // imgBase64 = tempImgBase64
-    //     loop()
-    //   }      
-    // }
-
-
-    // const loop = async (image, updatePreview, gl) => {
-
-    //   let result = await captureRef(pageView, {format: 'jpg', quality: 1.0});
-
-      
-    //   updatePreview();
-    //   gl.endFrameEXP();
-      
-    //   console.log(result);
-  
-    // }
-
-    // loop()
-
-    // interval = setInterval(async () => {
-    //   const tensor = imageAsTensors.next().value
-
-    //   if(!!tensor){
-    //     const [height, width] = tensor.shape
-    //     const data = new Buffer(
-    //     // concat with an extra alpha channel and slice up to 4 channels to handle 3 and 4 channels tensors
-    //     tf.concat([tensor, tf.ones([height, width, 1]).mul(255)], [-1])
-    //         .slice([0], [height, width, 4])
-    //         .dataSync(),
-    //     )
-
-    //     const rawImageData = {data, width, height};
-    //     const jpegImageData = jpeg.encode(rawImageData, 200);
-
-    //     tempImgBase64 = tf.util.decodeString(jpegImageData.data, "base64")
-
-    //     if(tempImgBase64 == imgBase64){
-    //       repeat = true;
-    //     }
-
-
-    //     imgBase64 = tempImgBase64
-        
-
-    //     // console.log(imgBase64);
-    //     // console.log(socket);
-    //     socket.emit("frame", {
-    //       frame: tempImgBase64,
-    //     });
-
-
-    //     // setTimeout(() => setBase64(imgBase64), 500)
-        
-    //     // updatePreview();
-    //     // gl.endFrameEXP();
-
-
-    //     // await tf.nextFrame()
-    //     // console.log(encoded);
-    //     tf.dispose([tensor]);
-
-
-
-    //     // let items = nextImageTensor.filter((item) => item !== 0 )
-    //     // console.log(items.length);
-    //     // const encoded = base64.encodeFromByteArray(nextImageTensor);
-    //     // console.log(encoded);
-    //     // await getPrediction(nextImageTensor);
-
-    //     // await sleep(1000)
-    //   }
-
-  
-    // }, 500)
 
   }
 
-  const startCapturing = () => {
+  const startCapturing = async () => {
+
     startCamera(true)
   }
 
-  const stopCapturing = () => {
+  const occupyLobby = async () => {
+    let token = await loadJWT("jwtKey") 
+    let {data} = await axios.post(`${restAPIURL}/api/tracker/setOccupied`, {lobbyID: route.params.lobbyID},{
+      headers: {
+        Authorization: 'Bearer ' + token //the token is a variable which holds the token
+      }
+    })
+
+    if(data.error){
+      setDisplayText(`${data.error} check lobby members to see who is currently using`)
+    }
+    setStartCapture(true)
+  }
+
+  const freeLobby = async () => {
+    let token = await loadJWT("jwtKey") 
+    await axios.post(`${restAPIURL}/api/tracker/setVacant`, {lobbyID: route.params.lobbyID},{
+      headers: {
+        Authorization: 'Bearer ' + token //the token is a variable which holds the token
+      }
+    })
+
+    setStartCapture(false)
+
+  }
+
+  const stopCapturing = async () => {
+    socket.close()
+
     startCamera(false)
   }
 
@@ -296,11 +256,18 @@ export default function CameraComponent({route}) {
     height: 1200,
     width: 1600,
   };
+  
 
+  let startCaptureComponent = showStartCapture ? <Button title="Start capturing" onPress={() => startCapturing()}/> : null
   if(!camera) {
     return (
       <View style={{position: 'relative',height: 500, alignItems: 'center', justifyContent: 'center',}} >
-        <Button title="Start capturing" onPress={() => startCapturing()}/>
+        {!showStartCapture ? <Button title="Occupy drowsiness detection" onPress={() => occupyLobby()}/> : null}
+        {showStartCapture && !camera ? <Button title="Vacate drowsiness detection slot (Also clears stored location values)" onPress={() => freeLobby()}/> : null}
+        <View style={{marginTop: 20}}>
+          {!!displayText ? <Text style={{fontSize: 20, fontWeight: 'bold', color: 'red'}}>{displayText}</Text> : startCaptureComponent}
+        </View>
+        
 
       </View>
     )

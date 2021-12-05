@@ -12,14 +12,19 @@ export default function LobbyRoomsFC({route, navigation}) {
     const [userData, setUserData] = React.useState({id: 0, token: ""})
 
     useEffect(() => {
+      let mounted = true 
 
       const unsubscribe = navigation.addListener('focus', () => {
         setItems({displayText: "~ Loading lobbies ~", items: []})
         loadLobbies()
       });
   
+      return () => {
+      // prevent memory leaks
+        mounted = false 
+        unsubscribe;
+       }
       // Return the function to unsubscribe from the event so it gets removed on unmount
-      return unsubscribe;
     }, [navigation]);
 
     async function loadLobbies(){
@@ -179,6 +184,13 @@ export default function LobbyRoomsFC({route, navigation}) {
           </View>
         )
       }else if(item.lobbyActive) {
+        if(item.userIDTracking == userData.id){
+          return (
+            <View style={styles.mainButtons}>
+              <Button title="Currently occupying lobby, use or vacate" onPress={() => navigation.navigate({name: "Driver", params: {lobbyID: section.lobbyID, occupiedID: userData.id}})}/>
+            </View>
+          )
+        }
         return (
           <View style={styles.mainButtons}>
             <Button title="Track existing driver" onPress={() => trackDriver(item.userIDTracking)}/>
@@ -187,7 +199,7 @@ export default function LobbyRoomsFC({route, navigation}) {
       }else if(item.lobbyInactive){
         return (
           <View style={styles.mainButtons}>
-            <Button color="green" title="Become a driver" onPress={() => navigation.navigate({name: "Driver", params: {userID: userData.id}})}/>
+            <Button color="green" title="Become a driver" onPress={() => navigation.navigate({name: "Driver", params: {lobbyID: section.lobbyID}})}/>
           </View>
         )
       }else if (item.lobbyDelete) {

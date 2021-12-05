@@ -31,7 +31,7 @@ export default class TrackerService {
     if (verify) {
       let updateUserLocation = await this.pool.maybeOne(
         sql`
-                update tracking set longitude=${longitude}, latitude=${latitude}, updated_at=now(), alert_drowsy=true
+                update tracking set longitude=${longitude}, latitude=${latitude}, updated_at=now(), alert_drowsy=true where id=${verify.tracking_id}
             `
       );
 
@@ -57,7 +57,7 @@ export default class TrackerService {
     if (checkOccupied.user_tracking == userID) {
       let updateUserTracking = await this.pool.maybeOne(
         sql`
-                  update tracking set user_tracking=0 where id=${checkOccupied.tracking_id}
+                  update tracking set user_tracking=0, longitude=NULL, latitude=NULL, alert_drowsy=NULL where id=${checkOccupied.tracking_id}
               `
       );
 
@@ -83,13 +83,13 @@ export default class TrackerService {
 
     // verify user can occupy, not taken by someone else
     if (checkEmpty.user_tracking == 0) {
-      let updateUserTracking = await this.pool.one(
+      await this.pool.query(
         sql`
                 update tracking set user_tracking=${userID} where id=${checkEmpty.tracking_id}
             `
       );
 
-      if (updateUserTracking) return { message: "Success" };
+      return { message: "Success" };
     } else {
       return { error: "Lobby drowsiness detection is busy" };
     }
@@ -138,5 +138,19 @@ export default class TrackerService {
     } catch (_) {
       return { error: "Internal server error" };
     }
+  }
+
+  public async checkVacant(lobbyID) {
+    let found = this.pool.one(
+      sql`
+        select 
+          tracking.user_tracking 
+        from 
+          lobbies inner join tracking on lobbies.tracking_id = tracking.id
+        where lobbies.id = ${lobbyID} 
+      `
+    );
+
+    return found;
   }
 }

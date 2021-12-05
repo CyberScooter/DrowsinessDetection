@@ -22,6 +22,7 @@ export default class TrackerController {
     });
 
     this.router.post("/updateLocation", authenticateToken, async (req, res) => {
+      console.log(req.body);
       res.send(
         await this.trackerService.setTrackerLocation(
           (req as any).user.id,
@@ -29,6 +30,12 @@ export default class TrackerController {
           req.body.longitude,
           req.body.latitude
         )
+      );
+    });
+
+    this.router.get("/checkVacant", authenticateToken, async (req, res) => {
+      res.send(
+        await this.trackerService.checkVacant(Number(req.query.lobbyID))
       );
     });
 

@@ -10,6 +10,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { loadJWT, clearAsyncStorage} from './src/main/services/deviceStorage'
 import Login from './src/main/Login'
 import Register from './src/main/Register'
+import FaceCalibration from './src/main/FaceCalibration'
 // import NavStacks from './src/main/components/NavStacks';
 
 const Stack = createNativeStackNavigator();
@@ -19,6 +20,7 @@ function HomeScreen({navigation}) {
 
 
   useEffect(() => {
+    console.log("CLEEEAR============================================");
     const unsubscribe = navigation.addListener('focus', () => {
       async function getJWT(){
         // await clearAsyncStorage()
@@ -63,6 +65,9 @@ function HomeScreen({navigation}) {
           <Button title="Go to camera" onPress={() => {navigation.navigate("Driver")}}/>
         </View>
         <View style={{marginBottom: 30}}>
+          <Button title="Calibrate face (optional)" onPress={() => {navigation.navigate("Face Calibration")}} />
+        </View>
+        <View style={{marginBottom: 30}}>
           <Button title="Driver drowsiness detection lobby room" onPress={() => {navigation.navigate("Lobby", {authenticated: true})}} />
         </View>
         <View style={{marginBottom: 30}}>
@@ -82,6 +87,7 @@ export default function App() {
         <Stack.Screen name="Home" options={{orientation: 'portrait'}} component={HomeScreen}  />
         <Stack.Screen name="Login" options={{orientation: 'portrait', contentStyle: {backgroundColor: '#A9A9A9'}}} component={Login}/>
         <Stack.Screen name="Register" options={{orientation: 'portrait', contentStyle: {backgroundColor: '#A9A9A9'}}} component={Register}/>
+        <Stack.Screen name="Face Calibration" options={{orientation: 'portrait', contentStyle: {backgroundColor: '#A9A9A9'}}} component={FaceCalibration}/>
         <Stack.Screen name="Lobby" options={{orientation: 'portrait', contentStyle: {backgroundColor: '#A9A9A9'}}} component={LobbyRoom}/>
         <Stack.Screen name="NewLobbyForm" options={{orientation: 'portrait'}} component={NewLobbyForm}  />
         <Stack.Screen name="Driver" options={{title: "Driving mode on"}} component={Camera} initialParams={{'authenticated':true}}/>

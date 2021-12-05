@@ -8,6 +8,8 @@ import { config } from "dotenv";
 import * as csrf from "csurf";
 import LobbyController from "./modules/lobbies/lobbies.controller";
 import LobbyService from "./modules/lobbies/lobbies.service";
+import TrackerController from "./modules/tracking/tracker.controller";
+import TrackerService from "./modules/tracking/tracker.service";
 
 // let origin;
 
@@ -31,6 +33,7 @@ config();
 const controllers = [
   new LobbyController("/lobby", new LobbyService()),
   new UserController("/user", new UserService()),
+  new TrackerController("/tracker", new TrackerService()),
 ];
 
 app.use(cookieParser());
