@@ -28,7 +28,7 @@ def calculate_EAR(eye):
 def calculator(frame2):
     nparr = np.fromstring(base64.b64decode(frame2), np.uint8)
 
-    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR) 
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
@@ -68,5 +68,5 @@ def calculator(frame2):
         right_ear = calculate_EAR(rightEye)
 
         EAR = (left_ear+right_ear)/2
-        EAR = round(EAR, 2)
+        EAR = round(EAR, 6)
         return EAR

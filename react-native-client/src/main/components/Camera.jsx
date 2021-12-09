@@ -1,3 +1,4 @@
+// TODO: cleanup unused imports
 import { AppRegistry, StyleSheet, Text, Alert, TouchableOpacity, View, Button, Dimensions } from 'react-native';
 import {Camera} from 'expo-camera'
 import { Audio } from 'expo-av';
@@ -27,15 +28,14 @@ import { PermissionsAndroid } from 'react-native';
 import axios from 'axios';
 import {loadJWT} from '../services/deviceStorage'
 
-// import {initiateSocket, disconnectSocket, sendFrame} from './FrameCaptureSocket'
 
-let instances = 0;
 let frameCount = 0;
-let userID;
 let drowsyAlert = false;
 let longitude = 0;
 let latitude = 0
 let socket;
+
+let drowsyOrClosedEAR;
 
 
 export default function CameraComponent({route}) {  
@@ -45,19 +45,37 @@ export default function CameraComponent({route}) {
   
 
   const [camera, startCamera] = useState(false)
-  const [refreshCamera, setRefreshCamera] = useState(0)
   const [permissions, setPermissions] = useState("")
-  const [displayText, setDisplayText] = useState("")
-  const [showStartCapture, setStartCapture] = useState(false)
+  const [displayErrorText, setDisplayErrorText] = useState("")
+  const [showCallibratedFaceOption, setCallibratedFaceOption] = useState(false)
+  const [showVacateSlot, setVacateSlotOption] = useState(false)
 
   const TensorCamera = cameraWithTensors(Camera);
 
   useEffect( () => {
     let mounted = true 
 
+    async function checkCallibratedFace(){
+      let token = await loadJWT("jwtKey") 
+      let {data} = await axios.get(`${restAPIURL}/api/lobby/getEARValues`,{
+        headers: {
+          Authorization: 'Bearer ' + token //the token is a variable which holds the token
+        }
+      })
+      
+      if(data.drowsyorclosedear != null){
+        drowsyOrClosedEAR = data.drowsyorclosedear
+        setCallibratedFaceOption(true)
+      }else {
+        setCallibratedFaceOption(false)
+      }
+    }
+
+    checkCallibratedFace()
+
     if(route.params.occupiedID){
-      init = true
-      setStartCapture(true)
+      setVacateSlotOption(true)
+
     }
     
     const fetchData = async () => {
@@ -77,43 +95,31 @@ export default function CameraComponent({route}) {
     }
 
     if(camera) {
-      console.log("asdl;fkaposkfpoask");
       fetchData();
 
       // socket = io(flaskURL , {reconnection: true});
       socket = io(flaskURL, {reconnection: false});
       if(!socket.hasListeners('frameAnalysis')){
         socket.addEventListener("frameAnalysis", async function (event) {
-          if(instances == 2) {
-            instances = 0;
-            
+  
+          if (event === undefined) {
+            return;
+          }
+  
+          if (event == "DEAD/DROWSY" ) {
+            frameCount++;
+          } else {
+            frameCount = 0;
+          }
+  
+          if (frameCount >= 2) {
+            console.log(event);
             let location;
             location = await Location.getCurrentPositionAsync({});
             longitude = location.coords.longitude
             latitude = location.coords.latitude
             drowsyAlert = true
             startCamera(false)
-
-              
-  
-
-          }
-  
-          if (event === undefined) {
-            return;
-          }
-  
-          if (event == "DROWSY" || event == "DEAD") {
-            frameCount++;
-          } else {
-            frameCount = 0;
-          }
-  
-          if (frameCount >= 3) {
-            console.log(event);
-            frameCount = 0;
-            instances++;
-            return
           } 
         });
       }
@@ -124,41 +130,18 @@ export default function CameraComponent({route}) {
         latitude = 0
         drowsyAlert = false
     
-        setDisplayText("Park your car, drowsy")
+        setDisplayErrorText("Park your car, drowsy")
 
 
 
       }
     }
 
-    // if(!camera) {
-    //   if(!!socket){
-    //     console.log(socket);
-    //     if(socket.connected){
-    //       socket.close()
-    //     }
-    //   }
-      
-    // }
-
-
     return () => {
       // prevent memory leaks
         mounted = false 
     }
-    // if(!socketInit) {
-      // console.log(route.params.lobbyID);
-      
-      // userID = route.params.userID
-      // socket.on("connect", (e) => { console.log(e) });
 
-      // fetchData();
-
-      // socketInit = true
-      // return
-
-      
-    // }
 
   }, [camera])
 
@@ -182,8 +165,9 @@ export default function CameraComponent({route}) {
           const data = await tensor.array()
 
           if(!!socket)
-            socket.emit("frameCNNClassification", {
-                frame: data
+            socket.emit("frameFaceCallibrated", {
+                frame: data,
+                closed_or_drowsy: drowsyOrClosedEAR
             });
 
 
@@ -207,6 +191,7 @@ export default function CameraComponent({route}) {
 
   const startCapturing = async () => {
 
+
     startCamera(true)
   }
 
@@ -219,9 +204,9 @@ export default function CameraComponent({route}) {
     })
 
     if(data.error){
-      setDisplayText(`${data.error} check lobby members to see who is currently using`)
+      setDisplayErrorText(`${data.error} check lobby members to see who is currently using`)
     }
-    setStartCapture(true)
+    setVacateSlotOption(true)
   }
 
   const freeLobby = async () => {
@@ -232,7 +217,7 @@ export default function CameraComponent({route}) {
       }
     })
 
-    setStartCapture(false)
+    setVacateSlotOption(false)
 
   }
 
@@ -258,15 +243,20 @@ export default function CameraComponent({route}) {
   };
   
 
-  let startCaptureComponent = showStartCapture ? <Button title="Start capturing" onPress={() => startCapturing()}/> : null
+  let startCaptureComponent = showCallibratedFaceOption ? <Button title="Detect drowsiness using callibrated face" onPress={() => startCapturing()}/> : <Text style={{textAlign: 'center', fontSize: 20}}>Callibrate face in the Home Menu to use drowsy detection with face callibration</Text>
   if(!camera) {
     return (
       <View style={{position: 'relative',height: 500, alignItems: 'center', justifyContent: 'center',}} >
-        {!showStartCapture ? <Button title="Occupy drowsiness detection" onPress={() => occupyLobby()}/> : null}
-        {showStartCapture && !camera ? <Button title="Vacate drowsiness detection slot (Also clears stored location values)" onPress={() => freeLobby()}/> : null}
-        <View style={{marginTop: 20}}>
-          {!!displayText ? <Text style={{fontSize: 20, fontWeight: 'bold', color: 'red'}}>{displayText}</Text> : startCaptureComponent}
+        <View style={{marginBottom: 20}}>
+          {!!displayErrorText ? 
+          <View>
+            <Text style={{fontSize: 20, fontWeight: 'bold', color: 'red'}}>{displayErrorText}</Text>
+          </View> 
+          : startCaptureComponent}
         </View>
+        {!showVacateSlot ? <Button title="Occupy slot" onPress={() => occupyLobby()}/> : null}
+        {showVacateSlot && !camera ? <Button title="Vacate slot in this lobby" onPress={() => freeLobby()}/> : null}
+
         
 
       </View>

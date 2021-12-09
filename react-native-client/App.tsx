@@ -11,7 +11,6 @@ import { loadJWT, clearAsyncStorage} from './src/main/services/deviceStorage'
 import Login from './src/main/Login'
 import Register from './src/main/Register'
 import FaceCalibration from './src/main/FaceCalibration'
-// import NavStacks from './src/main/components/NavStacks';
 
 const Stack = createNativeStackNavigator();
 
@@ -61,14 +60,14 @@ function HomeScreen({navigation}) {
   }else {
     return (
       <View style={{ flex: 1, justifyContent: 'center', backgroundColor: '#A9A9A9'}}>
-        <View style={{marginBottom: 30}}>
+        {/* <View style={{marginBottom: 30}}>
           <Button title="Go to camera" onPress={() => {navigation.navigate("Driver")}}/>
+        </View> */}
+        <View style={{marginBottom: 30}}>
+          <Button title="Driver drowsiness detection lobby room" onPress={() => {navigation.navigate("Lobby", {authenticated: true})}} />
         </View>
         <View style={{marginBottom: 30}}>
           <Button title="Calibrate face (optional)" onPress={() => {navigation.navigate("Face Calibration")}} />
-        </View>
-        <View style={{marginBottom: 30}}>
-          <Button title="Driver drowsiness detection lobby room" onPress={() => {navigation.navigate("Lobby", {authenticated: true})}} />
         </View>
         <View style={{marginBottom: 30}}>
           <Button title="Logout" onPress={() => logout()}/>
@@ -90,7 +89,7 @@ export default function App() {
         <Stack.Screen name="Face Calibration" options={{orientation: 'portrait', contentStyle: {backgroundColor: '#A9A9A9'}}} component={FaceCalibration}/>
         <Stack.Screen name="Lobby" options={{orientation: 'portrait', contentStyle: {backgroundColor: '#A9A9A9'}}} component={LobbyRoom}/>
         <Stack.Screen name="NewLobbyForm" options={{orientation: 'portrait'}} component={NewLobbyForm}  />
-        <Stack.Screen name="Driver" options={{title: "Driving mode on"}} component={Camera} initialParams={{'authenticated':true}}/>
+        <Stack.Screen name="Driver" options={{title: "Drowsy detection"}} component={Camera} initialParams={{'authenticated':true}}/>
         <Stack.Screen name="Members" options={{title: "Lobby members", orientation: 'portrait', contentStyle: {backgroundColor: '#A9A9A9'}}} component={LobbyMembers}/>
       </Stack.Navigator>
     </NavigationContainer>

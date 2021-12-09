@@ -187,7 +187,7 @@ export default function LobbyRoomsFC({route, navigation}) {
         if(item.userIDTracking == userData.id){
           return (
             <View style={styles.mainButtons}>
-              <Button title="Currently occupying lobby, use or vacate" onPress={() => navigation.navigate({name: "Driver", params: {lobbyID: section.lobbyID, occupiedID: userData.id}})}/>
+              <Button title={"Currently occupying lobby \n\nuse or vacate"} onPress={() => navigation.navigate({name: "Driver", params: {lobbyID: section.lobbyID, occupiedID: userData.id}})}/>
             </View>
           )
         }

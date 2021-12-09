@@ -25,7 +25,7 @@ def calculate_EAR(eye):
     return ear_aspect_ratio
 
 
-def drowsiness_recognition(frame2):
+def drowsiness_recognition(frame2, closedOrDrowsy):
 
     # print(frame2.split(',')[1])
     # im_bytes = base64.b64decode(base64.b64encode(
@@ -44,7 +44,7 @@ def drowsiness_recognition(frame2):
     # nparr = np.fromstring(base64.b64decode(frame2), np.uint8)
 
     # img = cv2.imdecode(data, cv2.IMREAD_COLOR)
-    
+
     gray = cv2.cvtColor(data, cv2.COLOR_BGR2GRAY)
 
     # img = cv2.imdecode(nparr, cv2.IMREAD_COLOR) use this
@@ -92,11 +92,9 @@ def drowsiness_recognition(frame2):
         right_ear = calculate_EAR(rightEye)
 
         EAR = (left_ear+right_ear)/2
-        EAR = round(EAR, 2)
-        if EAR <= 0.12:
-            return "DEAD"
-        elif EAR < 0.26:
-            return "DROWSY"
+        EAR = round(EAR, 5)
+        if EAR <= closedOrDrowsy:
+            return "DEAD/DROWSY"
             cv2.putText(gray, "DROWSY", (20, 100),
                         cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 255), 4)
             cv2.putText(gray, "Are you Sleepy?", (20, 400),

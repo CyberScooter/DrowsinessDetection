@@ -3,83 +3,89 @@ import { StyleSheet, Text, View, TouchableOpacity, Button } from 'react-native';
 import { Camera } from 'expo-camera';
 import { flaskURL } from '../../env';
 import io from 'socket.io-client'
+import axios from 'axios'
+import {loadJWT} from './services/deviceStorage'
+import {restAPIURL} from '../../env'
 
 
 // const socket = io(flaskURL , {reconnection: false});
 cameraRef = React.createRef();
-
+let socket;
 export default function FaceCalibration() {
   const [hasPermission, setHasPermission] = useState(null);
   const [type, setType] = useState(Camera.Constants.Type.front);
+  const [displayText, setDisplayText] = useState("")
 
   useEffect(() => {
-    (async () => {
-      const { status } = await Camera.requestPermissionsAsync();
-      setHasPermission(status === 'granted');
+    let mounted = true 
+  
+    const fetchData = async () => {
+      const camera = await Camera.requestPermissionsAsync()
 
-      socket.on("connect", (e) => { console.log(e) });
-      socket.addEventListener("openEARValueResponse", async function (event) {
-        console.log(event);
+      if (camera.status !== 'granted') {
+          setPermissions("Camera permission not enabled, enable to use the drowsiness detection")
+      }
+
+    }
+
+    fetchData();
+    
+    return () => {
+      // prevent memory leaks
+        mounted = false 
+    }
  
-
-      })
-      socket.addEventListener("closedEARValueResponse", async function (event) {
- 
-
-      })
-      socket.addEventListener("drowsyEARValueResponse", async function (event) {
- 
-
-      })
-    })();
   }, []);
-
-  async function saveEARValue(type, value){
-
-  }
 
   async function calculateEAR(type){
     const options = { quality: 1, base64: true, fixOrientation: true, exif: true};
     let result = await cameraRef.current.takePictureAsync(options)
 
-    if(type== "open"){
-      console.log("ran");
-      socket.emit("openEARValue", {
-        earValue: result.base64
-      });
+    if(type== "closed_or_drowsy"){
+      try{
+      setDisplayText('~ Loading ~')
 
-    }else if(type == "drowsy"){
-      socket.emit("drowsyEARValue", {
-        earValue: result.base64
-      });
+      let {data} = await axios.post(`${flaskURL}/earValues`, {opened: result.base64})
+      
+      if(data.response == "Face not found"){
+        setDisplayText("Cannot find face")
+      }else if(data.response) {
+        let token = await loadJWT("jwtKey") 
+        let res = await axios.post(`${restAPIURL}/api/lobby/updateEARValues`, {earValue: data.response},{
+            headers: {
+              Authorization: 'Bearer ' + token //the token is a variable which holds the token
+            }
+        })
 
-    }else if(type == "closed"){
-      socket.emit("closedEARValue", {
-        earValue: result.base64
-      });
+        
 
+        if(res.data.message){
+          setDisplayText("Value set")
+
+        }else {
+          setDisplayText("Error has occured")
+        }
+      }
+    }catch(_){
+      setDisplayText("Error has occured")
+    
     }
 
+    }
+  
   }
 
-  if (hasPermission === null) {
-    return <View />;
-  }
   if (hasPermission === false) {
     return <Text>No access to camera</Text>;
   }
   return (
     <View style={styles.container}>
-      <Camera style={styles.camera} type={type} ref={cameraRef}/>
-      <View style={styles.buttons}>
-        <Button title="Save EAR for awake eyes" onPress={() => {calculateEAR("open")}}/>
-      </View>
+      <Camera style={styles.camera} type={type} ref={cameraRef}></Camera>
+      <Text style={styles.message}>{displayText}</Text>
       <View style={styles.buttons}> 
-        <Button title="Save EAR for drowsy eyes" onPress={() => {calculateEAR("drowsy")}}/>
+        <Button title="Save EAR for drowsy or closed eyes" onPress={() => {calculateEAR("closed_or_drowsy")}}/>
       </View>
-      <View style={styles.buttons}>
-        <Button title="Save EAR for closed eyes" onPress={() => {calculateEAR("closed")}}/>
-      </View>
+      
     </View>
   );
 }
@@ -116,6 +122,13 @@ const styles = StyleSheet.create({
     },
     buttons: {
       marginBottom: 20
+    },
+    message: {
+      fontSize:24,
+      color: 'white',
+      fontWeight: 'bold',
+      textAlign: 'center',
+      marginBottom: 10
     }
   });
   
