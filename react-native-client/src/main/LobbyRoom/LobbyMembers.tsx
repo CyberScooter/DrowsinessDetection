@@ -5,7 +5,7 @@ import {restAPIURL} from '../../../env'
 import axios from 'axios'
 import { loadJWT} from '../services/deviceStorage'
 
-let driving= 3;
+let ownerID;
 
 export default function LobbyMembers({route}) {
 
@@ -42,10 +42,15 @@ export default function LobbyMembers({route}) {
 
           items = res.data.map((el) => {
 
+
+            if(el.owner) {
+              ownerID = el.id
+            }
             return {
               id: el.id,
               user: el.username
             }
+
 
           })
 
@@ -93,7 +98,7 @@ export default function LobbyMembers({route}) {
                 return (
                   <View style={styles.item}>
                     <Text style={styles.title}>{item.user}</Text>
-                    <Button color="darkred" title="Remove Member" onPress={() => removeUser(route.params?.lobbyID, item.id)}/>
+                    {ownerID ? <Button color="darkred" title="Remove Member" onPress={() => removeUser(route.params?.lobbyID, item.id)}/> : null}
                     {currentlyDrivingComponent}
                   </View>
                 )

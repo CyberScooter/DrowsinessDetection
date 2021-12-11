@@ -193,7 +193,8 @@ export default class LobbyService {
           cast(users.id as varchar(10)),
           users.username,
           tracking.user_tracking,
-          lobby_members.created_at
+          lobby_members.created_at,
+          lobby_members.owner
         from
           users
           inner join lobby_members on users.id = lobby_members.user_id

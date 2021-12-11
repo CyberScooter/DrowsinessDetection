@@ -5,9 +5,14 @@ import {restAPIURL} from '../../../env'
 import axios from 'axios'
 import {loadJWT} from '../services/deviceStorage'
 
-let driving= 3;
+let trackingInterval = {
+  lobbyID: null,
+  userID: null,
+  interval: null
+};
 
-export default function LobbyRoomsFC({route, navigation}) {
+
+export default function LobbyRoom({route, navigation}) {
     const [items, setItems] = React.useState({items: [], displayText: ''})
     const [userData, setUserData] = React.useState({id: 0, token: ""})
 
@@ -60,10 +65,16 @@ export default function LobbyRoomsFC({route, navigation}) {
             }]
   
             if(el.user_tracking != 0){
+              let lobbyTracking = false
+              if(!!trackingInterval.lobbyID && el.lobby_id == trackingInterval.lobbyID)
+                lobbyTracking = true
+              
+
               data.push({
                 id: "lobbyActive",
                 userIDTracking: el.user_tracking,
-                lobbyActive: true
+                lobbyActive: true,
+                lobbyTracking: lobbyTracking
               })
             }else {
               data.push({
@@ -136,6 +147,37 @@ export default function LobbyRoomsFC({route, navigation}) {
         }
      }
 
+    async function trackDriver(userID, lobbyID) {
+      if(trackingInterval.lobbyID != null) return
+      // console.log(userID, lobbyID);
+      let token = await loadJWT("jwtKey")
+      loadLobbies()
+      trackingInterval.lobbyID = lobbyID
+      trackingInterval.userID = userID
+      trackingInterval.interval = setInterval(async () => {
+        let {data} = await axios.post(`${restAPIURL}/api/tracker/checkDrowsy`, {lobbyID: lobbyID} ,{
+          headers: {
+            Authorization: 'Bearer ' + token //the token is a variable which holds the token
+          }
+        })
+
+        if(data.alert_drowsy){
+          console.log(data.longitude, data.latitude, data.updated_at);
+          trackingInterval.lobbyID = null
+          trackingInterval.userID = null
+          clearInterval(trackingInterval.interval);
+          loadLobbies()
+        }
+      }, 30000);
+    }
+
+    async function stopTrackingDriver() {
+      loadLobbies()
+      trackingInterval.lobbyID = null
+      trackingInterval.userID = null
+      clearInterval(trackingInterval.interval);
+    }
+
     let loading;
 
     if(items.items.length == 0){
@@ -191,11 +233,20 @@ export default function LobbyRoomsFC({route, navigation}) {
             </View>
           )
         }
-        return (
-          <View style={styles.mainButtons}>
-            <Button title="Track existing driver" onPress={() => trackDriver(item.userIDTracking)}/>
-          </View>
-        )
+        if(!item.lobbyTracking){
+          return (
+            <View style={styles.mainButtons}>
+              <Button title="Track existing driver" onPress={() => trackDriver(item.userIDTracking, section.lobbyID)}/>
+            </View>
+          )
+        }else {
+          return (
+            <View style={styles.mainButtons}>
+              <Button title="Stop tracking" onPress={() => stopTrackingDriver(item.userIDTracking, section.lobbyID)}/>
+            </View>
+          )
+        }
+        
       }else if(item.lobbyInactive){
         return (
           <View style={styles.mainButtons}>

@@ -100,8 +100,11 @@ export default class TrackerService {
       let checkDrowsy = await this.pool.one(
         sql`
               select 
-                  tracking.alert_drowsy
-                  lobbies.tracking_id
+                  tracking.alert_drowsy,
+                  lobbies.tracking_id,
+                  tracking.longitude as longitude,
+                  tracking.latitude as latitude,
+                  tracking.updated_at as updated_at
               from 
                   lobbies 
                   inner join tracking on lobbies.tracking_id=tracking.id 
@@ -110,31 +113,7 @@ export default class TrackerService {
           `
       );
 
-      if (checkDrowsy.alert_drowsy) {
-        let result = await this.pool.one(
-          sql`
-                select 
-                    tracking.longitude
-                    tracking.latitude
-                    tracking.updated_at
-                from 
-                    lobbies 
-                    inner join tracking on lobbies.tracking_id=tracking.id 
-                where 
-                    lobbies.id=${lobbyID}
-                `
-        );
-
-        await this.pool.one(
-          sql`
-                  update tracking set alert_drowsy=false where id=${checkDrowsy.tracking_id}
-                `
-        );
-
-        return result;
-      }
-
-      return { message: "No alert" };
+      return checkDrowsy;
     } catch (_) {
       return { error: "Internal server error" };
     }
