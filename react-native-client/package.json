@@ -25,8 +25,10 @@
     "expo-keep-awake": "~9.2.0",
     "expo-location": "~12.1.2",
     "expo-media-library": "^12.1.2",
+    "expo-notifications": "^0.13.3",
     "expo-permissions": "^12.1.1",
     "expo-status-bar": "~1.0.4",
+    "expo-task-manager": "~9.2.2",
     "i": "^0.3.7",
     "jpeg-js": "^0.4.3",
     "npm": "^7.24.1",
@@ -53,7 +55,7 @@
     "socket.io-client": "^4.2.0",
     "tensor-as-base64": "^0.1.1",
     "use-force-update": "^1.0.7",
-    "expo-task-manager": "~9.2.2"
+    "expo-speech": "~9.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",

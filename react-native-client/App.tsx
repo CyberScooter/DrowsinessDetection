@@ -19,7 +19,6 @@ function HomeScreen({navigation}) {
 
 
   useEffect(() => {
-    console.log("CLEEEAR============================================");
     const unsubscribe = navigation.addListener('focus', () => {
       async function getJWT(){
         // await clearAsyncStorage()

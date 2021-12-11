@@ -27,6 +27,8 @@ import {flaskURL, restAPIURL} from '../../../env'
 import { PermissionsAndroid } from 'react-native';
 import axios from 'axios';
 import {loadJWT} from '../services/deviceStorage'
+import * as Speech from 'expo-speech';
+
 
 
 let frameCount = 0;
@@ -36,6 +38,7 @@ let latitude = 0
 let socket;
 
 let drowsyOrClosedEAR;
+let previousNetworkState;
 
 
 export default function CameraComponent({route}) {  
@@ -49,6 +52,7 @@ export default function CameraComponent({route}) {
   const [displayErrorText, setDisplayErrorText] = useState("")
   const [showCallibratedFaceOption, setCallibratedFaceOption] = useState(false)
   const [showVacateSlot, setVacateSlotOption] = useState(false)
+
 
   const TensorCamera = cameraWithTensors(Camera);
 
@@ -112,7 +116,7 @@ export default function CameraComponent({route}) {
             frameCount = 0;
           }
   
-          if (frameCount >= 2) {
+          if (frameCount >= 1) {
             console.log(event);
             let location;
             location = await Location.getCurrentPositionAsync({});
@@ -132,8 +136,6 @@ export default function CameraComponent({route}) {
     
         setDisplayErrorText("Park your car, drowsy")
 
-
-
       }
     }
 
@@ -147,37 +149,36 @@ export default function CameraComponent({route}) {
 
   async function updateLocation(longitude, latitude){
     let token = await loadJWT("jwtKey") 
-    console.log("lol")
+    Speech.speak('Please park your car at the nearest and safest place')
     await axios.post(`${restAPIURL}/api/tracker/updateLocation`, {longitude: longitude, latitude: latitude, lobbyID: route.params.lobbyID},{
         headers: {
           Authorization: 'Bearer ' + token //the token is a variable which holds the token
         }
     })
-
   }
 
   const handleCameraStream = async (imageAsTensors , updatePreview, gl) => {
     const loop = async () => {
 
-        try{
-          let tensor = await imageAsTensors.next().value
-
-          const data = await tensor.array()
-
-          if(!!socket)
-            socket.emit("frameFaceCallibrated", {
-                frame: data,
-                closed_or_drowsy: drowsyOrClosedEAR
-            });
+      try{
+        let tensor = await imageAsTensors.next().value
 
 
-          updatePreview();
-          gl.endFrameEXP();
+        const data = await tensor.array()
 
-          tf.dispose(tensor);
-        }catch(e){
-          
-        }
+        if(!!socket)
+          socket.emit("frameFaceCallibrated", {
+              frame: data,
+              closed_or_drowsy: drowsyOrClosedEAR
+          });
+
+
+        updatePreview();
+        gl.endFrameEXP();
+
+        tf.dispose(tensor);
+      }catch(_){
+      }
 
       await new Promise(resolve => setTimeout(resolve, 500 || DEF_DELAY));
 
@@ -185,7 +186,17 @@ export default function CameraComponent({route}) {
       
   }
 
-  if(camera) loop();
+  if(!netInfo.isConnected) {
+    Speech.speak("Network coverage has been lost, please park your car if you're drowsy")
+    previousNetworkState = true
+  }else {
+    if(previousNetworkState){
+      Speech.speak("Network coverage is back, detection system is back online")
+      socket = io(flaskURL, {reconnection: false});
+      previousNetworkState = false
+    }
+    if(camera) loop();
+  }
 
   }
 

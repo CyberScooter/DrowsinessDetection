@@ -4,6 +4,7 @@ import { FlatList } from "react-native-gesture-handler";
 import {restAPIURL} from '../../../env'
 import axios from 'axios'
 import {loadJWT} from '../services/deviceStorage'
+import * as Notifications from "expo-notifications";
 
 let trackingInterval = {
   lobbyID: null,
@@ -16,6 +17,15 @@ export default function LobbyRoom({route, navigation}) {
     const [items, setItems] = React.useState({items: [], displayText: ''})
     const [userData, setUserData] = React.useState({id: 0, token: ""})
 
+
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }),
+    });
+
     useEffect(() => {
       let mounted = true 
 
@@ -23,7 +33,6 @@ export default function LobbyRoom({route, navigation}) {
         setItems({displayText: "~ Loading lobbies ~", items: []})
         loadLobbies()
       });
-  
       return () => {
       // prevent memory leaks
         mounted = false 
@@ -147,9 +156,8 @@ export default function LobbyRoom({route, navigation}) {
         }
      }
 
-    async function trackDriver(userID, lobbyID) {
+    async function trackDriver(userID, lobbyID, title) {
       if(trackingInterval.lobbyID != null) return
-      // console.log(userID, lobbyID);
       let token = await loadJWT("jwtKey")
       loadLobbies()
       trackingInterval.lobbyID = lobbyID
@@ -162,7 +170,14 @@ export default function LobbyRoom({route, navigation}) {
         })
 
         if(data.alert_drowsy){
-          console.log(data.longitude, data.latitude, data.updated_at);
+          Notifications.scheduleNotificationAsync({
+            content: {
+              title: `${title} lobby has a drowsy driver`,
+              body: `Longitude: ${data.longitude}, Latitude: ${data.latitude}`,
+            },
+            trigger: null,
+          });
+
           trackingInterval.lobbyID = null
           trackingInterval.userID = null
           clearInterval(trackingInterval.interval);
@@ -236,7 +251,7 @@ export default function LobbyRoom({route, navigation}) {
         if(!item.lobbyTracking){
           return (
             <View style={styles.mainButtons}>
-              <Button title="Track existing driver" onPress={() => trackDriver(item.userIDTracking, section.lobbyID)}/>
+              <Button title="Track existing driver" onPress={() => trackDriver(item.userIDTracking, section.lobbyID, section.title)}/>
             </View>
           )
         }else {
