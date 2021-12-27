@@ -11,6 +11,8 @@ import { loadJWT, clearAsyncStorage} from './src/main/services/deviceStorage'
 import Login from './src/main/Login'
 import Register from './src/main/Register'
 import FaceCalibration from './src/main/FaceCalibration'
+import Test from './src/main/components/Test'
+import Test2 from './src/main/components/TestCamera'
 
 const Stack = createNativeStackNavigator();
 
@@ -54,6 +56,12 @@ function HomeScreen({navigation}) {
         <View style={{marginBottom: 30}}>
           <Button title="Register" onPress={() => {navigation.navigate("Register")}}/>
         </View>
+        <View style={{marginBottom: 30}}>
+          <Button title="Test" onPress={() => {navigation.navigate("Test")}}/>
+        </View>
+        <View style={{marginBottom: 30}}>
+          <Button title="Test2" onPress={() => {navigation.navigate("Test2")}}/>
+        </View>
       </View>
     );
   }else {
@@ -70,6 +78,9 @@ function HomeScreen({navigation}) {
         </View>
         <View style={{marginBottom: 30}}>
           <Button title="Logout" onPress={() => logout()}/>
+        </View>
+        <View style={{marginBottom: 30}}>
+          <Button title="Test" onPress={() => {navigation.navigate("Test")}}/>
         </View>
       </View>
     );
@@ -88,6 +99,8 @@ export default function App() {
         <Stack.Screen name="Face Calibration" options={{orientation: 'portrait', contentStyle: {backgroundColor: '#A9A9A9'}}} component={FaceCalibration}/>
         <Stack.Screen name="Lobby" options={{orientation: 'portrait', contentStyle: {backgroundColor: '#A9A9A9'}}} component={LobbyRoom}/>
         <Stack.Screen name="NewLobbyForm" options={{orientation: 'portrait'}} component={NewLobbyForm}  />
+        <Stack.Screen name="Test" options={{orientation: 'portrait'}} component={Test}  />
+        <Stack.Screen name="Test2" options={{orientation: 'portrait'}} component={Test2}  />
         <Stack.Screen name="Driver" options={{title: "Drowsy detection"}} component={Camera} initialParams={{'authenticated':true}}/>
         <Stack.Screen name="Members" options={{title: "Lobby members", orientation: 'portrait', contentStyle: {backgroundColor: '#A9A9A9'}}} component={LobbyMembers}/>
       </Stack.Navigator>
