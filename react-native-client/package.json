@@ -55,7 +55,8 @@
     "redux": "^4.1.1",
     "socket.io-client": "^4.2.0",
     "tensor-as-base64": "^0.1.1",
-    "use-force-update": "^1.0.7"
+    "use-force-update": "^1.0.7",
+    "expo-gl-cpp": "~10.4.1"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",

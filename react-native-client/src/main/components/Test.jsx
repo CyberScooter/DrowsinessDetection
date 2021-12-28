@@ -4,10 +4,11 @@ import {Camera} from 'expo-camera'
 import React, { useState} from 'react'
 import {cameraWithTensors} from '@tensorflow/tfjs-react-native';
 import * as tf from '@tensorflow/tfjs';
+const TensorCamera = cameraWithTensors(Camera);
+
 
 export default function CameraComponent() {  
 
-    const TensorCamera = cameraWithTensors(Camera);
 
     React.useEffect(() => {
         const prepare = async () => {
@@ -16,9 +17,8 @@ export default function CameraComponent() {
         prepare();
     }, []);
 
-    const handleCameraStream = async ( images) => {
+    const handleCameraStream = async () => {
         const loop = async () => {
-
             requestAnimationFrame(loop);
         };
       
@@ -31,10 +31,10 @@ export default function CameraComponent() {
       };
 
     return (
-        <View style={styles.container}>
+      <View style={styles.container}>
         <TensorCamera
           style={styles.camera}
-          type={Camera.Constants.Type.front}
+          type={Camera.Constants.Type.back}
           resizeWidth={240}
           resizeHeight={180}
           resizeDepth={3}

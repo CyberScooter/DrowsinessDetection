@@ -110,7 +110,7 @@ export default function CameraComponent({route}) {
             return;
           }
   
-          if (event == "DEAD/DROWSY" ) {
+          if (event == "DROWSY" ) {
             frameCount++;
           } else {
             frameCount = 0;

@@ -94,11 +94,5 @@ def drowsiness_recognition(frame2, closedOrDrowsy):
         EAR = (left_ear+right_ear)/2
         EAR = round(EAR, 5)
         if EAR <= closedOrDrowsy:
-            return "DEAD/DROWSY"
-            cv2.putText(gray, "DROWSY", (20, 100),
-                        cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 255), 4)
-            cv2.putText(gray, "Are you Sleepy?", (20, 400),
-                        cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 4)
-            print("Drowsy")
+            return "DROWSY"
         return "AWAKE"
-        print(EAR)
