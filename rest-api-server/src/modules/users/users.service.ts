@@ -55,6 +55,26 @@ export default class UserService {
     return jwt.sign(payload, process.env.JWT_TOKEN_SECRET, options);
   }
 
+  public async generateNewToken(username, password) {
+    let userFound: any = await this.pool.maybeOne(
+      sql` 
+          select * from users where username=${username}
+        `
+    );
+    if (userFound === null) return { error: "User does not exist" };
+
+    const match = await compare(password, userFound.hash);
+    delete userFound.hash;
+
+    if (match) {
+      return {
+        token: this.generateToken({ id: userFound.id }, { expiresIn: "7d" }),
+      };
+    } else {
+      return { error: "Unauthorized" };
+    }
+  }
+
   public async userLogin(user: UserDTO) {
     try {
       let userFound: any = await this.pool.maybeOne(
@@ -75,6 +95,32 @@ export default class UserService {
       }
 
       return { error: "Password does not match" };
+    } catch (_) {
+      return { error: "Internal server error" };
+    }
+  }
+
+  public async checkUser(username: string, password: string) {
+    try {
+      let userFound: any = await this.pool.maybeOne(
+        sql` 
+            select id, hash from users where username=${username}
+          `
+      );
+      if (userFound === null) return { error: "User does not exist" };
+
+      const match = await compare(password, userFound.hash);
+      delete userFound.hash;
+
+      if (match) {
+        return {
+          id: userFound.id,
+        };
+      } else {
+        return {
+          error: "Cannot find user",
+        };
+      }
     } catch (_) {
       return { error: "Internal server error" };
     }

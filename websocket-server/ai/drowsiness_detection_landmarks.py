@@ -95,4 +95,4 @@ def drowsiness_recognition(frame2, closedOrDrowsy):
         EAR = round(EAR, 5)
         if EAR <= closedOrDrowsy:
             return "DROWSY"
-        return "AWAKE"
+        return "OPEN"

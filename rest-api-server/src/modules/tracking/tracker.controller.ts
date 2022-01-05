@@ -33,7 +33,7 @@ export default class TrackerController {
       );
     });
 
-    this.router.get("/checkVacant", authenticateToken, async (req, res) => {
+    this.router.get("/checkVacant", async (req, res) => {
       res.send(
         await this.trackerService.checkVacant(Number(req.query.lobbyID))
       );

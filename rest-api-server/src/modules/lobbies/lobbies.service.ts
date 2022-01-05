@@ -282,4 +282,20 @@ export default class LobbyService {
 
     return values;
   }
+
+  public async getLobby(username, lobbyName) {
+    let found = await this.pool.maybeOne(sql`
+      select
+        lobbies.id
+      from 
+        users inner join lobby_members on users.id=lobby_members.user_id
+        inner join lobbies on lobby_members.lobby_id=lobbies.id
+      where
+        lobbies.name = ${lobbyName} and users.username=${username} 
+    `);
+
+    if (!found.id) return { error: "Cannot find lobby" };
+
+    return { id: found.id };
+  }
 }

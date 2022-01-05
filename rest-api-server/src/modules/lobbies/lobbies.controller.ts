@@ -84,5 +84,14 @@ export default class LobbyController {
     this.router.get("/getEARValues", authenticateToken, async (req, res) => {
       res.send(await this.lobbyService.getEARValues((req as any).user.id));
     });
+
+    this.router.get("/get", async (req, res) => {
+      res.send(
+        await this.lobbyService.getLobby(
+          (req as any).query.username,
+          (req as any).query.lobbyName
+        )
+      );
+    });
   }
 }

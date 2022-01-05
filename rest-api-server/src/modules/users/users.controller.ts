@@ -38,17 +38,25 @@ export default class UserController {
     });
 
     // generate new 7d token
-    this.router.get("/generateToken", authenticateToken, async (req, res) => {
-      let newToken = this.userService.generateToken(
-        { id: (req as any).user.id },
-        {
-          expiresIn: "7d",
-        }
+    this.router.post("/generateToken", async (req, res) => {
+      let newToken = await this.userService.generateNewToken(
+        req.body.username,
+        req.body.password
       );
 
       if (newToken.error == "Internal server error")
         return res.status(500).json(newToken);
       res.status(200).json(newToken);
+    });
+
+    this.router.get("/checkUser", async (req, res) => {
+      let userID = await this.userService.checkUser(
+        (req as any).query.username,
+        (req as any).query.password
+      );
+      if (userID.error == "Internal server error")
+        return res.status(500).json(userID);
+      res.status(200).json(userID);
     });
   }
 }
