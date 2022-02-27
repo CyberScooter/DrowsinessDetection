@@ -4,6 +4,7 @@ from flask_socketio import SocketIO, emit
 # from flask_cors import CORS
 # from ai.webcam_detection import drowsiness_detection
 from ai.drowsiness_detection_landmarks import drowsiness_recognition as drowsiness_detection_landmarks
+from ai.drowsiness_detection_cnn import drowsiness_recognition as drowsiness_detection_cnn
 from ai.ear_value_calculator import calculator
 
 
@@ -60,7 +61,7 @@ def value_changed(message):
 def value_changed(message):
 
     # print(message['frame'])
-    emit('frameAnalysis', drowsiness_detection_landmarks(
+    emit('frameAnalysis', drowsiness_detection_cnn(
         message['frame']))
 
 

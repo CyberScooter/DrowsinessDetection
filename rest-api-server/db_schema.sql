@@ -43,10 +43,11 @@ CREATE TABLE "ear_values" (
   "updated_at" timestamp
 );
 
-ALTER TABLE "lobby_members" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
+ALTER TABLE "lobby_members" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE;
 
-ALTER TABLE "lobby_members" ADD FOREIGN KEY ("lobby_id") REFERENCES "lobbies" ("id");
+ALTER TABLE "lobby_members" ADD FOREIGN KEY ("lobby_id") REFERENCES "lobbies" ("id") ON DELETE CASCADE;
 
-ALTER TABLE "lobbies" ADD FOREIGN KEY ("tracking_id") REFERENCES "tracking" ("id");
+ALTER TABLE "lobbies" ADD FOREIGN KEY ("tracking_id") REFERENCES "tracking" ("id") ON DELETE CASCADE;
 
-ALTER TABLE "users" ADD FOREIGN KEY ("ear_values_id") REFERENCES "ear_values" ("id");
+ALTER TABLE "users" ADD FOREIGN KEY ("ear_values_id") REFERENCES "ear_values" ("id") ON DELETE CASCADE;
+

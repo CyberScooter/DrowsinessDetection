@@ -5,6 +5,7 @@ import {restAPIURL} from '../../../env'
 import axios from 'axios'
 import { loadJWT} from '../services/deviceStorage'
 
+let access;
 let ownerID;
 
 export default function LobbyMembers({route}) {
@@ -44,6 +45,7 @@ export default function LobbyMembers({route}) {
 
 
             if(el.owner) {
+              access = (route.params.userID == el.id) ? el.id : -1
               ownerID = el.id
             }
             return {
@@ -80,7 +82,7 @@ export default function LobbyMembers({route}) {
 
     }
       
-    let currentlyDrivingComponent;
+    let currentlyDrivingComponent  = null
     let flatList;
 
     if(Items.length > 0){
@@ -92,26 +94,24 @@ export default function LobbyMembers({route}) {
           <FlatList
             data={Items}
             renderItem={({item}) => {
-              if(route.params.owner == item.id) {
-                currentlyDrivingComponent = null
-                if(item.id == driverID) currentlyDrivingComponent = <Text>Currently driving</Text>
+              if(item.id == driverID) currentlyDrivingComponent = <Text>Currently driving</Text>
+              if(access != -1) {
                 return (
                   <View style={styles.item}>
-                    <Text style={styles.title}>{item.user}</Text>
-                    {ownerID ? <Button color="darkred" title="Remove Member" onPress={() => removeUser(route.params?.lobbyID, item.id)}/> : null}
-                    {currentlyDrivingComponent}
-                  </View>
-                )
-              }else {
-                currentlyDrivingComponent = null
-                if(item.id == driverID) currentlyDrivingComponent = <Text>Currently driving</Text>
-                return (
-                  <View style={styles.item}>
-                    <Text style={styles.title}>{item.user} - Lobby Owner</Text>
+                    {ownerID != item.id ? <Text style={styles.title}>{item.user}</Text> : <Text style={styles.title}>{item.user} - Lobby Owner</Text>}
+                    {ownerID != item.id ? <Button color="darkred" title="Remove Member" onPress={() => removeUser(route.params?.lobbyID, item.id)}/> : null}
                     {currentlyDrivingComponent}
                   </View>
                 )
               }
+              else {
+                return (
+                  <View style={styles.item}>
+                    {ownerID == item.id ? <Text style={styles.title}>{item.user} - Lobby Owner</Text> : <Text style={styles.title}>{item.user}</Text>}
+                    {currentlyDrivingComponent}
+                  </View>
+                )
+              } 
             }}
           />
         </View>

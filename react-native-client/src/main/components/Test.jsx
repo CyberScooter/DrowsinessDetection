@@ -13,6 +13,7 @@ export default function CameraComponent() {
     React.useEffect(() => {
         const prepare = async () => {
           await tf.ready();
+          const camera = await Camera.requestCameraPermissionsAsync()
         };
         prepare();
     }, []);

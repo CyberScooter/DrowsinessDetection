@@ -237,7 +237,7 @@ export default function LobbyRoom({route, navigation}) {
           <View style={styles.mainButtons}>
             <Text style={styles.title}>Number of members: {item.count}</Text>
             <Text selectable={true} style={styles.title}>Unique join code: <Text style={{fontWeight: 'bold'}}>{item.joinCode}</Text> </Text>
-            <Button color="coral" title="Show members" onPress={() => navigation.navigate({name: "Members", params: {lobbyID: section.lobbyID, owner: section.owner}})} />
+            <Button color="coral" title="Show members" onPress={() => navigation.navigate({name: "Members", params: {lobbyID: section.lobbyID, userID: userData.id}})} />
           </View>
         )
       }else if(item.lobbyActive) {

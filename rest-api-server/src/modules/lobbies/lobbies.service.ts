@@ -254,35 +254,6 @@ export default class LobbyService {
     return { message: "Vacant" };
   }
 
-  public async updateEARValues(earValue, userID) {
-    let earValuesID = await this.pool.maybeOne(sql`
-      select ear_values_id as id from users where id=${userID} 
-    `);
-
-    if (!earValuesID.id) return { error: "Cannot find" };
-
-    await this.pool
-      .query(sql`update ear_values set ear_drowsy_or_closed_eyes=${earValue} where id=${earValuesID.id}
-    `);
-
-    return { message: "Success" };
-  }
-
-  public async getEARValues(userID) {
-    let values = this.pool.maybeOne(sql`
-      select 
-        ear_drowsy_or_closed_eyes as drowsyOrClosedEAR 
-      from 
-        ear_values inner join users on users.ear_values_id=ear_values.id 
-      where 
-        users.id=${userID}
-    `);
-
-    if (!values) return { error: "Not found" };
-
-    return values;
-  }
-
   public async getLobby(username, lobbyName) {
     let found = await this.pool.maybeOne(sql`
       select

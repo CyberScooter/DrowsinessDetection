@@ -42,7 +42,7 @@ def getEARValues():
 
     if newToken.get('token'):
         values = requests.get(
-            "http://localhost:3002/api/lobby/getEARValues?lobbyName=", headers={'Authorization': 'Bearer ' + newToken['token']}).json()
+            "http://localhost:3002/api/user/getEARValues?lobbyName=", headers={'Authorization': 'Bearer ' + newToken['token']}).json()
 
         return values['drowsyorclosedear']
 
@@ -102,7 +102,7 @@ def detection_system():
                     elif(result == "DROWSY"):
                         print("DROWSY")
                         counter += 1
-                        # if the counter is greater than 3, play and show alert that user is asleep
+                        # if the counter is greater than 2, play and show alert that user is asleep
                         if counter > 1:
                             break
                     elif(result == "Face not found"):

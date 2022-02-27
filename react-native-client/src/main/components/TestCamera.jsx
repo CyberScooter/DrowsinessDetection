@@ -3,7 +3,6 @@ import { AppRegistry, StyleSheet, Text, Alert, TouchableOpacity, View, Button, D
 import {Camera} from 'expo-camera'
 import React, { useState} from 'react'
 import {cameraWithTensors} from '@tensorflow/tfjs-react-native';
-import * as FaceDetector from 'expo-face-detector';
 
 let camera;
 export default function CameraComponent() {  
@@ -29,21 +28,7 @@ export default function CameraComponent() {
 
     return (
         <View>
-            <Camera
-                style={styles.preview}
-                type={Camera.Constants.Type.front}
-                ref={ref => {
-                    camera = ref;
-                }}
-                onFacesDetected={handleFacesDetected}
-                faceDetectorSettings={{
-                    mode: FaceDetector.Constants.Mode.accurate,
-                    detectLandmarks: FaceDetector.Constants.Landmarks.all,
-                    runClassifications: FaceDetector.Constants.Classifications.none,
-                    minDetectionInterval: 500,
-                    tracking: true,
-                }}
-            />
+
             <Button title="Start" onPress={() => snap()}/>
             <Button title="Stop" onPress={() => snap()}/>
         </View>

@@ -20,7 +20,7 @@ export default function FaceCalibration() {
     let mounted = true 
   
     const fetchData = async () => {
-      const camera = await Camera.requestPermissionsAsync()
+      const camera = await Camera.requestCameraPermissionsAsync()
 
       if (camera.status !== 'granted') {
           setPermissions("Camera permission not enabled, enable to use the drowsiness detection")
@@ -51,7 +51,7 @@ export default function FaceCalibration() {
         setDisplayText("Cannot find face")
       }else if(data.response) {
         let token = await loadJWT("jwtKey") 
-        let res = await axios.post(`${restAPIURL}/api/lobby/updateEARValues`, {earValue: data.response},{
+        let res = await axios.post(`${restAPIURL}/api/user/updateEARValues`, {earValue: data.response},{
             headers: {
               Authorization: 'Bearer ' + token //the token is a variable which holds the token
             }

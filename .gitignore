@@ -8,3 +8,4 @@ docker-compose.production.yml
 init-letsencrypt.sh
 data
 /client/nginx
+/test

@@ -39,6 +39,7 @@ let socket;
 
 let drowsyOrClosedEAR;
 let previousNetworkState;
+let detectionType;
 
 
 export default function CameraComponent({route}) {  
@@ -61,7 +62,7 @@ export default function CameraComponent({route}) {
 
     async function checkCallibratedFace(){
       let token = await loadJWT("jwtKey") 
-      let {data} = await axios.get(`${restAPIURL}/api/lobby/getEARValues`,{
+      let {data} = await axios.get(`${restAPIURL}/api/user/getEARValues`,{
         headers: {
           Authorization: 'Bearer ' + token //the token is a variable which holds the token
         }
@@ -84,7 +85,7 @@ export default function CameraComponent({route}) {
     
     const fetchData = async () => {
       await tf.ready();
-      const camera = await Camera.requestPermissionsAsync()
+      const camera = await Camera.requestCameraPermissionsAsync()
       const location = await Location.requestForegroundPermissionsAsync();
       await Location.getCurrentPositionAsync({}).catch(() => {
         setPermissions("Camera permission not enabled, enable to use the drowsiness detection")
@@ -167,7 +168,7 @@ export default function CameraComponent({route}) {
         const data = await tensor.array()
 
         if(!!socket)
-          socket.emit("frameFaceCallibrated", {
+          socket.emit(detectionType, {
               frame: data,
               closed_or_drowsy: drowsyOrClosedEAR
           });
@@ -200,10 +201,15 @@ export default function CameraComponent({route}) {
 
   }
 
-  const startCapturing = async () => {
+  const startCapturing = async (type) => {
+    if(type == "EAR"){
+      detectionType = "frameFaceCallibrated"
+      startCamera(true)
+    }else if(type == "CNN"){
+      detectionType = "frameCNNClassification"
+      startCamera(true)
+    }
 
-
-    startCamera(true)
   }
 
   const occupyLobby = async () => {
@@ -254,16 +260,25 @@ export default function CameraComponent({route}) {
   };
   
 
-  let startCaptureComponent = showCallibratedFaceOption ? <Button title="Detect drowsiness using callibrated face" onPress={() => startCapturing()}/> : <Text style={{textAlign: 'center', fontSize: 20}}>Callibrate face in the Home Menu to use drowsy detection with face callibration</Text>
+  let earCapturingComponent = showCallibratedFaceOption ? <Button title="Detect drowsiness using callibrated face" onPress={() => startCapturing("EAR")}/> : <Text style={{textAlign: 'center', fontSize: 20}}>Callibrate face in the Home Menu to use EAR drowsy detection</Text>
+  let cnnCapturingComponent =  <Button title="Detect drowsiness using CNN" onPress={() => startCapturing("CNN")}/> 
   if(!camera) {
     return (
       <View style={{position: 'relative',height: 500, alignItems: 'center', justifyContent: 'center',}} >
         <View style={{marginBottom: 20}}>
-          {!!displayErrorText ? 
+          {/* && showVacateSlot */}
+          {!!displayErrorText || !showVacateSlot ? 
           <View>
             <Text style={{fontSize: 20, fontWeight: 'bold', color: 'red'}}>{displayErrorText}</Text>
           </View> 
-          : startCaptureComponent}
+          : 
+          <View >
+            <View style={{paddingBottom: 20}}>
+              {earCapturingComponent}
+            </View>
+            {cnnCapturingComponent}
+          </View>
+          }
         </View>
         {!showVacateSlot ? <Button title="Occupy slot" onPress={() => occupyLobby()}/> : null}
         {showVacateSlot && !camera ? <Button title="Vacate slot in this lobby" onPress={() => freeLobby()}/> : null}

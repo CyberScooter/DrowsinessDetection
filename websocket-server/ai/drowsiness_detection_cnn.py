@@ -11,18 +11,15 @@ from tensorflow import keras
 import face_recognition
 import matplotlib.pyplot as plt
 
-detector = dlib.get_frontal_face_detector()
-dlib_facelandmark = dlib.shape_predictor(
-    "C:\\Users\\hrithik\\Documents\\Projects\\fyp-idea\\websocket-server\\ai\\shape_predictor_68_face_landmarks.dat")
-cap = cv2.VideoCapture(0)
-
 eye_model = keras.models.load_model(
     "C:\\Users\\hrithik\\Documents\\Projects\\fyp-idea\\websocket-server\\ai\\weight_model.h5")
 eyes = ["left_eye", "right_eye"]
 
 
 def drowsiness_recognition(frame):
-    facial_features_list = face_recognition.face_landmarks(frame)
+    data = np.asarray(frame, np.uint8)
+
+    facial_features_list = face_recognition.face_landmarks(data)
 
     if(len(facial_features_list) == 0):
         return "Face not found"
@@ -57,9 +54,10 @@ def drowsiness_recognition(frame):
             left = x_min - round((((bottom-top) - x_range))/2)
 
         if(i == "left_eye"):
-            leftEye = frame[top:(bottom + 1), left:(right + 1)]
+            print(leftEye)
+            leftEye = data[top:(bottom + 1), left:(right + 1)]
             continue
-        rightEye = frame[top:(bottom + 1), left:(right + 1)]
+        rightEye = data[top:(bottom + 1), left:(right + 1)]
 
     leftEye = cv2.resize(leftEye, (64, 64))
     # leftEye = cv2.cvtColor(leftEye, cv2.COLOR_BGR2GRAY)
@@ -73,10 +71,10 @@ def drowsiness_recognition(frame):
     leftEye = leftEye/255.0
 
     # get prediction from model
-    lEye = eye_model.predict(leftEye)
-    rEye = eye_model.predict(rightEye)
+    lEye = np.argmax(eye_model.predict(leftEye), axis=1)
+    rEye = np.argmax(eye_model.predict(rightEye), axis=1)
 
-    if lEye[0][0] < 0.5 or rEye[0][0] < 0.5:
+    if lEye[0] == 1 or rEye[0] == 1:
         return "OPEN"
     else:
         return "DROWSY"
