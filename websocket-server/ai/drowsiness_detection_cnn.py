@@ -12,7 +12,7 @@ import face_recognition
 import matplotlib.pyplot as plt
 
 eye_model = keras.models.load_model(
-    "C:\\Users\\hrithik\\Documents\\Projects\\fyp-idea\\websocket-server\\ai\\weight_model.h5")
+    "C:\\Users\\hrithik\\Documents\\FYP_CS\\Code\\websocket-server\\ai\\weight_model.h5")
 eyes = ["left_eye", "right_eye"]
 
 
@@ -54,7 +54,6 @@ def drowsiness_recognition(frame):
             left = x_min - round((((bottom-top) - x_range))/2)
 
         if(i == "left_eye"):
-            print(leftEye)
             leftEye = data[top:(bottom + 1), left:(right + 1)]
             continue
         rightEye = data[top:(bottom + 1), left:(right + 1)]

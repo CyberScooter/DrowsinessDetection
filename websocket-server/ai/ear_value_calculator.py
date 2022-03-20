@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 detector = dlib.get_frontal_face_detector()
 dlib_facelandmark = dlib.shape_predictor(
-    "C:\\Users\\hrithik\\Documents\\Projects\\fyp-idea\\websocket-server\\ai\\shape_predictor_68_face_landmarks.dat")
+    "C:\\Users\\hrithik\\Documents\\FYP_CS\\Code\\websocket-server\\ai\\shape_predictor_68_face_landmarks.dat")
 cap = cv2.VideoCapture(0)
 
 

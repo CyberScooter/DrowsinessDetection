@@ -56,12 +56,12 @@ function HomeScreen({navigation}) {
         <View style={{marginBottom: 30}}>
           <Button title="Register" onPress={() => {navigation.navigate("Register")}}/>
         </View>
-        <View style={{marginBottom: 30}}>
+        {/* <View style={{marginBottom: 30}}>
           <Button title="Test" onPress={() => {navigation.navigate("Test")}}/>
         </View>
         <View style={{marginBottom: 30}}>
           <Button title="Test2" onPress={() => {navigation.navigate("Test2")}}/>
-        </View>
+        </View> */}
       </View>
     );
   }else {
@@ -79,9 +79,9 @@ function HomeScreen({navigation}) {
         <View style={{marginBottom: 30}}>
           <Button title="Logout" onPress={() => logout()}/>
         </View>
-        <View style={{marginBottom: 30}}>
+        {/* <View style={{marginBottom: 30}}>
           <Button title="Test" onPress={() => {navigation.navigate("Test")}}/>
-        </View>
+        </View> */}
       </View>
     );
   }
