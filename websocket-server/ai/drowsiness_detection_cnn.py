@@ -12,7 +12,7 @@ import face_recognition
 import matplotlib.pyplot as plt
 
 eye_model = keras.models.load_model(
-    "C:\\Users\\hrithik\\Documents\\FYP_CS\\Code\\websocket-server\\ai\\weight_model.h5")
+    "C:\\Users\\hrithik\\Documents\\FYP_CS\\Code\\websocket-server\\ai\\model1.h5")
 eyes = ["left_eye", "right_eye"]
 
 
@@ -58,13 +58,13 @@ def drowsiness_recognition(frame):
             continue
         rightEye = data[top:(bottom + 1), left:(right + 1)]
 
-    leftEye = cv2.resize(leftEye, (64, 64))
+    leftEye = cv2.resize(leftEye, (96, 96))
     # leftEye = cv2.cvtColor(leftEye, cv2.COLOR_BGR2GRAY)
-    leftEye = leftEye.reshape(-1, 64, 64, 3)
+    leftEye = leftEye.reshape(-1, 96, 96, 3)
 
-    rightEye = cv2.resize(rightEye, (64, 64))
+    rightEye = cv2.resize(rightEye, (96, 96))
     # rightEye = cv2.cvtColor(rightEye, cv2.COLOR_BGR2GRAY)
-    rightEye = rightEye.reshape(-1, 64, 64, 3)
+    rightEye = rightEye.reshape(-1, 96, 96, 3)
 
     rightEye = rightEye/255.0
     leftEye = leftEye/255.0
@@ -73,7 +73,7 @@ def drowsiness_recognition(frame):
     lEye = np.argmax(eye_model.predict(leftEye), axis=1)
     rEye = np.argmax(eye_model.predict(rightEye), axis=1)
 
-    if lEye[0] == 1 or rEye[0] == 1:
+    if lEye[0] == 0 or rEye[0] == 0:
         return "OPEN"
     else:
         return "DROWSY"

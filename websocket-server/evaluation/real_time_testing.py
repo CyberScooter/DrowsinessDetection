@@ -4,10 +4,11 @@ import numpy as np
 from tensorflow import keras
 import face_recognition
 import requests
-import sys
-from drowsiness_detection_cnn import drowsiness_recognition as drowsiness_detection_cnn
-from drowsiness_detection_landmarks import drowsiness_recognition as drowsiness_detection_landmarks
-import sys
+import sys, os
+sys.path.append(os.path.abspath(".."))
+
+from ai.drowsiness_detection_cnn import drowsiness_recognition as drowsiness_detection_cnn
+from ai.drowsiness_detection_landmarks import drowsiness_recognition as drowsiness_detection_landmarks
 import time
 import json
 
@@ -31,18 +32,19 @@ def getEARValues():
 
 results_cnn = []
 results_ear = []
-counter = 0
 
 cap = cv2.VideoCapture(0)
 
 def detection_system():
     try:
+        counter = 0
         earValue = getEARValues()
+
+        print("Ready")
 
         while(True):
             _, frame = cap.read()
 
-            print("Ready")
 
             # print(frame)
             cv2.imwrite("frame%d.jpg" % counter, frame)   
@@ -72,13 +74,12 @@ def detection_system():
             elif(result == "Face not found"):
                 print("Face not found")
             
-            print("ran")
             counter+= 1
             time.sleep(0.5)
-    except:
-        with open('ear_logs.txt', 'w') as filehandle:
+    except KeyboardInterrupt:
+        with open('ear_logs.txt', 'w+') as filehandle:
             json.dump(results_ear, filehandle)
-        with open('cnn_logs.txt', 'w') as filehandle:
+        with open('cnn_logs.txt', 'w+') as filehandle:
             json.dump(results_cnn, filehandle)
         cap.release()
 

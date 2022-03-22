@@ -3,7 +3,6 @@ import cv2
 import numpy as np
 from tensorflow import keras
 import face_recognition
-from playsound import playsound
 import requests
 import sys
 from ai.drowsiness_detection_cnn import drowsiness_recognition as drowsiness_detection_cnn
