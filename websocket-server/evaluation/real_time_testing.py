@@ -75,7 +75,7 @@ def detection_system():
                 print("Face not found")
             
             counter+= 1
-            time.sleep(0.5)
+            time.sleep(0.35)
     except KeyboardInterrupt:
         with open('ear_logs.txt', 'w+') as filehandle:
             json.dump(results_ear, filehandle)

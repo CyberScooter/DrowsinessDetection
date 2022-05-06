@@ -22,7 +22,6 @@ export default class TrackerController {
     });
 
     this.router.post("/updateLocation", authenticateToken, async (req, res) => {
-      console.log(req.body);
       res.send(
         await this.trackerService.setTrackerLocation(
           (req as any).user.id,

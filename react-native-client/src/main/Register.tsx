@@ -27,13 +27,18 @@ export default function Register ({navigation}) {
             return
         }
 
-        let {data} = await axios.post(`${restAPIURL}/api/user/register`, {username: formData.username.toLowerCase(), email: formData.email.toLowerCase(), password: formData.password.toLowerCase()})
+        try{
 
-        if(data.error){
-            setApiResponse(data.error)
-        }else {
-            await saveJWT("jwtKey", data.token)
-            navigation.navigate("Home")
+            let {data} = await axios.post(`${restAPIURL}/api/user/register`, {username: formData.username.toLowerCase(), email: formData.email.toLowerCase(), password: formData.password.toLowerCase()})
+
+            if(data.error){
+                setApiResponse(data.error)
+            }else {
+                await saveJWT("jwtKey", data.token)
+                navigation.navigate("Home")
+            }
+        }catch(e){
+            console.log(e);
         }
         
     }

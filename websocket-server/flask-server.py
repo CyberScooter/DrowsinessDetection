@@ -19,52 +19,38 @@ socketio = SocketIO(app, cors_allowed_origins="*",
 
 # values['slider1'] and values['slider2'] store the current value of the sliders
 # This is done to prevent data loss on page reload by client.
-counter = 0
-
-# Handler for a message recieved over 'connect' channel
-
-
-@app.route('/earValues', methods=['POST'])
-def home():
-    data = request.get_json()
-    if data['opened']:
-        val = calculator(data['opened'])
-        return jsonify({'response': val})
-    elif data['drowsy']:
-        val = calculator(data['drowsy'])
-        return jsonify({'response': val})
-    elif data['closed']:
-        val = calculator(data['closed'])
-        return jsonify({'response': val})
-    else:
-        return jsonify({'error': "Could not complete request"})
-
+# counter = 0
 
 @socketio.on('connect')
 def test_connect():
     emit('connect', 'connected!')
 
 
+@app.route('/earValue', methods=['POST'])
+def home():
+    data = request.get_json()
+    if data['drowsy']:
+        val = calculator(data['drowsy'])
+        return jsonify({'response': val})
+    else:
+        return jsonify({'error': "Could not complete request"})
+
 # classifies frames based on landmarks, EAR values
 @socketio.on('frameFaceCallibrated')
 def value_changed(message):
 
-    # print(message['frame'])
-
     emit('frameAnalysis', drowsiness_detection_landmarks(
         message['frame'], message['closed_or_drowsy']))
 
+    
 # classifies frames through a CNN model
-
-
 @socketio.on('frameCNNClassification')
 def value_changed(message):
 
-    # print(message['frame'])
     emit('frameAnalysis', drowsiness_detection_cnn(
         message['frame']))
 
 
 # Notice how socketio.run takes care of app instantiation as well.
 if __name__ == '__main__':
-    socketio.run(app, port=5000)
+    socketio.run(app, port=5000, host="0.0.0.0")

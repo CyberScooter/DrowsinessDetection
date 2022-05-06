@@ -15,25 +15,11 @@ import React, { useState } from "react";
 import { useEffect } from "react";
 import * as tf from "@tensorflow/tfjs";
 import "@tensorflow/tfjs-react-native";
-// import {io} from 'socket.io-client';
 import * as Location from "expo-location";
-import { GLView } from "expo-gl";
-
-import { captureRef } from "react-native-view-shot";
 import io from "socket.io-client";
-import { Buffer } from "buffer";
 import { useNetInfo } from "@react-native-community/netinfo";
-
-import Orientation from "react-native-orientation";
 import { cameraWithTensors } from "@tensorflow/tfjs-react-native";
-import { LogBox } from "react-native";
-import tensorAsBase64 from "tensor-as-base64";
-import * as jpeg from "jpeg-js";
-import base64 from "react-native-base64";
-import * as Permissions from "expo-permissions";
-import useForceUpdate from "use-force-update";
 import { flaskURL, restAPIURL } from "../../../env";
-import { PermissionsAndroid } from "react-native";
 import axios from "axios";
 import { loadJWT } from "../services/deviceStorage";
 import * as Speech from "expo-speech";
@@ -64,7 +50,7 @@ export default function CameraComponent({ route }) {
 
     async function checkCallibratedFace() {
       let token = await loadJWT("jwtKey");
-      let { data } = await axios.get(`${restAPIURL}/api/user/getEARValues`, {
+      let { data } = await axios.get(`${restAPIURL}/api/user/getEARValue`, {
         headers: {
           Authorization: "Bearer " + token, //the token is a variable which holds the token
         },
@@ -122,8 +108,7 @@ export default function CameraComponent({ route }) {
             frameCount = 0;
           }
 
-          if (frameCount >= 1) {
-            console.log(event);
+          if (frameCount > 1) {
             let location;
             location = await Location.getCurrentPositionAsync({});
             longitude = location.coords.longitude;
@@ -187,7 +172,7 @@ export default function CameraComponent({ route }) {
         tf.dispose(tensor);
       } catch (_) {}
 
-      await new Promise((resolve) => setTimeout(resolve, 625 || DEF_DELAY));
+      await new Promise((resolve) => setTimeout(resolve, 350 || DEF_DELAY));
 
       requestAnimationFrame(loop);
     };
@@ -270,8 +255,8 @@ export default function CameraComponent({ route }) {
 
   // props.route.params.authenticated
   let textureDims = {
-    height: 1200,
-    width: 1600,
+    height: 800,
+    width: 600,
   };
 
   let earCapturingComponent = showCallibratedFaceOption ? (

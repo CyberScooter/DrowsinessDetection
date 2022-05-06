@@ -1,1 +1,0 @@
-["OPEN", "OPEN", "OPEN", "DROWSY", "DROWSY", "DROWSY"]

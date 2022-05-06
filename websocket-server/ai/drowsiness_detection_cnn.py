@@ -5,16 +5,19 @@ import io
 import base64
 import sys
 import numpy as np
+import os
 from imageio import imread
 from scipy.spatial import distance
 from tensorflow import keras
 import face_recognition
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
-eye_model = keras.models.load_model(
-    "C:\\Users\\hrithik\\Documents\\FYP_CS\\Code\\websocket-server\\ai\\model1.h5")
+dirname = os.path.dirname(__file__)
+# eye_model = keras.models.load_model(
+#     "C:\\Users\\hrithik\\Documents\\FYP_CS\\Code\\websocket-server\\ai\\model1.h5")
+eye_model = keras.models.load_model(os.path.join(dirname, 'model1.h5'))
+
 eyes = ["left_eye", "right_eye"]
-
 
 def drowsiness_recognition(frame):
     data = np.asarray(frame, np.uint8)
@@ -24,11 +27,7 @@ def drowsiness_recognition(frame):
     if(len(facial_features_list) == 0):
         return "Face not found"
 
-    leftEye = None
-    rightEye = None
-
-    x_range = None
-    y_range = None
+    leftEye, rightEye, x_range, y_range = None, None, None, None
 
     for i in eyes:
         eye = facial_features_list[0][i]
@@ -39,8 +38,7 @@ def drowsiness_recognition(frame):
         y_min = min([coordinate[1] for coordinate in eye])
 
         if(x_range is None):
-            x_range = x_max - x_min
-            y_range = y_max - y_min
+            x_range, y_range = x_max - x_min, y_max - y_min
 
         if x_range > y_range:
             right = round(.5*x_range) + x_max
@@ -59,19 +57,13 @@ def drowsiness_recognition(frame):
         rightEye = data[top:(bottom + 1), left:(right + 1)]
 
     leftEye = cv2.resize(leftEye, (96, 96))
-    # leftEye = cv2.cvtColor(leftEye, cv2.COLOR_BGR2GRAY)
-    leftEye = leftEye.reshape(-1, 96, 96, 3)
+    leftEye = leftEye.reshape(-1, 96, 96, 3)/255.0
 
     rightEye = cv2.resize(rightEye, (96, 96))
-    # rightEye = cv2.cvtColor(rightEye, cv2.COLOR_BGR2GRAY)
-    rightEye = rightEye.reshape(-1, 96, 96, 3)
-
-    rightEye = rightEye/255.0
-    leftEye = leftEye/255.0
+    rightEye = rightEye.reshape(-1, 96, 96, 3)/255.0
 
     # get prediction from model
-    lEye = np.argmax(eye_model.predict(leftEye), axis=1)
-    rEye = np.argmax(eye_model.predict(rightEye), axis=1)
+    lEye, rEye = np.argmax(eye_model.predict(leftEye), axis=1), np.argmax(eye_model.predict(rightEye), axis=1)
 
     if lEye[0] == 0 or rEye[0] == 0:
         return "OPEN"

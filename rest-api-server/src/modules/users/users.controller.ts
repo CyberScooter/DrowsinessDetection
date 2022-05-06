@@ -59,20 +59,16 @@ export default class UserController {
       res.status(200).json(userID);
     });
 
-    this.router.post(
-      "/updateEARValues",
-      authenticateToken,
-      async (req, res) => {
-        res.send(
-          await this.userService.updateEARValues(
-            req.body.earValue,
-            (req as any).user.id
-          )
-        );
-      }
-    );
+    this.router.post("/updateEARValue", authenticateToken, async (req, res) => {
+      res.send(
+        await this.userService.updateEARValues(
+          req.body.earValue,
+          (req as any).user.id
+        )
+      );
+    });
 
-    this.router.get("/getEARValues", authenticateToken, async (req, res) => {
+    this.router.get("/getEARValue", authenticateToken, async (req, res) => {
       res.send(await this.userService.getEARValues((req as any).user.id));
     });
   }

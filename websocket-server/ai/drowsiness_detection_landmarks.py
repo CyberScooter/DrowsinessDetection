@@ -4,16 +4,20 @@ import dlib
 import io
 import base64
 import sys
+import os
 import numpy as np
 from imageio import imread
 from scipy.spatial import distance
 import tensorflow as tf
 import json
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 detector = dlib.get_frontal_face_detector()
-dlib_facelandmark = dlib.shape_predictor(
-    "C:\\Users\\hrithik\\Documents\\FYP_CS\\Code\\websocket-server\\ai\\shape_predictor_68_face_landmarks.dat")
+dirname = os.path.dirname(__file__)
+# dlib_facelandmark = dlib.shape_predictor(
+#     "C:\\Users\\hrithik\\Documents\\FYP_CS\\Code\\websocket-server\\ai\\shape_predictor_68_face_landmarks.dat")
+dlib_facelandmark = dlib.shape_predictor(os.path.join(dirname, 'shape_predictor_68_face_landmarks.dat'))
+
 cap = cv2.VideoCapture(0)
 
 
@@ -25,7 +29,7 @@ def calculate_EAR(eye):
     return ear_aspect_ratio
 
 
-def drowsiness_recognition(frame2, closedOrDrowsy):
+def drowsiness_recognition(frame, closed_or_drowsy):
 
     # print(frame2.split(',')[1])
     # im_bytes = base64.b64decode(base64.b64encode(
@@ -37,7 +41,7 @@ def drowsiness_recognition(frame2, closedOrDrowsy):
     # encoded_data = frame2.split(',')[1]
     # nparr = np.fromstring(base64.b64decode(encoded_data), np.uint8)
 
-    data = np.asarray(frame2, np.uint8)
+    data = np.asarray(frame, np.uint8)
 
     # print(data)
 
@@ -46,6 +50,7 @@ def drowsiness_recognition(frame2, closedOrDrowsy):
     # img = cv2.imdecode(data, cv2.IMREAD_COLOR)
 
     gray = cv2.cvtColor(data, cv2.COLOR_BGR2GRAY)
+    # cv2.imwrite('img.png', gray)
 
     # img = cv2.imdecode(nparr, cv2.IMREAD_COLOR) use this
 
@@ -62,39 +67,27 @@ def drowsiness_recognition(frame2, closedOrDrowsy):
         return "Face not found"
 
     for face in faces:
-        face_landmarks = dlib_facelandmark(gray, face)
-        leftEye = []
-        rightEye = []
+        faceLandmarks = dlib_facelandmark(gray, face)
+        left_eye = []
+        right_eye = []
 
-        for n in range(36, 42):
-            x = face_landmarks.part(n).x
-            y = face_landmarks.part(n).y
-            leftEye.append((x, y))
-            next_point = n+1
-            if n == 41:
-                next_point = 36
-            x2 = face_landmarks.part(next_point).x
-            y2 = face_landmarks.part(next_point).y
-            cv2.line(gray, (x, y), (x2, y2), (0, 255, 0), 1)
+        for i in range(36, 42):
+            x = faceLandmarks.part(i).x
+            y = faceLandmarks.part(i).y
+            left_eye.append((x, y))
 
-        for n in range(42, 48):
-            x = face_landmarks.part(n).x
-            y = face_landmarks.part(n).y
-            rightEye.append((x, y))
-            next_point = n+1
-            if n == 47:
-                next_point = 42
-            x2 = face_landmarks.part(next_point).x
-            y2 = face_landmarks.part(next_point).y
-            cv2.line(gray, (x, y), (x2, y2), (0, 255, 0), 1)
+        for i in range(42, 48):
+            x = faceLandmarks.part(i).x
+            y = faceLandmarks.part(i).y
+            right_eye.append((x, y))
 
-        left_ear = calculate_EAR(leftEye)
-        right_ear = calculate_EAR(rightEye)
+        left_ear = calculate_EAR(left_eye)
+        right_ear = calculate_EAR(right_eye)
 
         EAR = (left_ear+right_ear)/2
 
         print(EAR)
         EAR = round(EAR, 5)
-        if EAR <= closedOrDrowsy:
+        if EAR <= closed_or_drowsy:
             return "DROWSY"
         return "OPEN"

@@ -1,6 +1,4 @@
-/ai/shape_predictor_68_face_landmarks.dat
 /ai/*.jpg
 /ai/*.png
 /ai/*.csv
 /ai/*.xml
-/ai/*.h5
