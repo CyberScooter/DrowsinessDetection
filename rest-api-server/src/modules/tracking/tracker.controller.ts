@@ -47,9 +47,12 @@ export default class TrackerController {
       );
     });
 
-    this.router.post("/checkDrowsy", authenticateToken, async (req, res) => {
+    this.router.get("/checkDrowsy", authenticateToken, async (req, res) => {
       res.send(
-        await this.trackerService.checkRealTimeDrowsy(Number(req.body.lobbyID))
+        await this.trackerService.checkRealTimeDrowsy(
+          Number(req.query.lobbyID),
+          (req as any).user.id
+        )
       );
     });
   }

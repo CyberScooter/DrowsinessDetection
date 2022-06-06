@@ -1,23 +1,24 @@
-<h3>Explanation for launching code:</h3>
-<ul>
-  <li>Frontend and REST API server with database server has been dockerized into containers</li>
-  <li>Drowsiness detection HAS NOT been dockerized, due to performance, and therefore the python requirements for the system will be needed to be installed locally on the machine<li>
-</ul>
+# Mobile application of Drowsiness Detection 
 
-<h3>Prerequisites:</h3>
+## Explanation for launching code
 
-<ul>
-  <li>Make sure docker is installed on local machine and python3</li>
-  <li>install cmake==3.22.2 using pip</li>
-  <li>install requirements.txt in websocket-server</li>
-</ul>
+* Frontend and REST API server with database server has been dockerized into containers
+* Drowsiness detection server HAS NOT been dockerized, due to performance, and therefore the python requirements for the system 
+  will be needed to be installed locally on the machine
 
-<h3>Procedure:</h3>
+## Prerequisites
 
-<ol>
-  <li>Launch docker</li>
-  <li>Edit ./docker-compose.yml file and ./react-native-client/env.js file by replacing the *LOCAL IPV4 IP* to your own local ipv4 ip</li>
-  <li>RUN within the root directory in terimal "docker-compose up --build"</li>
-  <li>RUN IN SEPERATE TERMINAL within the root directory "python3 ./websocket-server/flask-server.py" to run the detection server</li>
-  <li>Scan QR Code from docker client terminal in expo app</li>
-</ol>
+1. At least one Android device running with OS version >= 9.0
+2. Make sure docker is installed on local machine and python3
+3. install `cmake==3.22.2` using pip3 then install requirements.txt in `/python-server` directory
+4. extra real Android device will be needed to track drowsy driver because of the dockerized expo app
+
+## Instructions
+
+1. Launch docker
+2. Edit [docker-compose](./docker-compose.yml) file and [env.js](./react-native-client/env.js) file by replacing *LOCAL IPV4 IP* to your own machine local ipv4 ip that is running docker and python server
+3. `RUN docker-compose up --build` in the root project directory in the terminal
+4. `RUN python3 ./python-server/flask-server.py` IN SEPERATE TERMINAL within the root directory of project to run the detection server. 
+    if `python` command defaults to `python3` then use `python` instead</li>
+5. Scan QR Code from docker client terminal in expo app (two devices for drowsy detection and tracking or one for drowsy detection only)
+6. To exit, stop docker containers and server through `CTRL + C` or GUI for docker

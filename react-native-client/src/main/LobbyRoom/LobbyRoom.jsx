@@ -176,9 +176,9 @@ export default function LobbyRoom({ route, navigation }) {
     trackingInterval.lobbyID = lobbyID;
     trackingInterval.userID = userID;
     trackingInterval.interval = setInterval(async () => {
-      let { data } = await axios.post(
-        `${restAPIURL}/api/tracker/checkDrowsy`,
-        { lobbyID: lobbyID },
+      let { data } = await axios.get(
+        `${restAPIURL}/api/tracker/checkDrowsy?lobbyID=${lobbyID}`,
+        // { lobbyID: lobbyID },
         {
           headers: {
             Authorization: "Bearer " + token, //the token is a variable which holds the token
@@ -207,7 +207,7 @@ export default function LobbyRoom({ route, navigation }) {
         clearInterval(trackingInterval.interval);
         loadLobbies();
       }
-    }, 30000);
+    }, 10000);
   }
 
   async function stopTrackingDriver() {

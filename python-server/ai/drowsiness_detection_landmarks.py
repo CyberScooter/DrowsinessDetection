@@ -74,19 +74,18 @@ def drowsiness_recognition(frame, closed_or_drowsy):
         for i in range(36, 42):
             x = faceLandmarks.part(i).x
             y = faceLandmarks.part(i).y
-            left_eye.append((x, y))
+            right_eye.append((x, y))
 
         for i in range(42, 48):
             x = faceLandmarks.part(i).x
             y = faceLandmarks.part(i).y
-            right_eye.append((x, y))
+            left_eye.append((x, y))
 
         left_ear = calculate_EAR(left_eye)
         right_ear = calculate_EAR(right_eye)
 
         EAR = (left_ear+right_ear)/2
 
-        print(EAR)
         EAR = round(EAR, 5)
         if EAR <= closed_or_drowsy:
             return "DROWSY"

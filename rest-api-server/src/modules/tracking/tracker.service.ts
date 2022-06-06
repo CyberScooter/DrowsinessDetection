@@ -95,8 +95,15 @@ export default class TrackerService {
     }
   }
 
-  public async checkRealTimeDrowsy(lobbyID) {
+  public async checkRealTimeDrowsy(lobbyID, userID) {
     try {
+      let userInLobby = await this.pool.maybeOne(sql`
+        select id from lobby_members where lobby_id=${lobbyID} and user_id=${userID}
+      `);
+
+      // check if user is in lobby to check if drowsy or not
+      if (!userInLobby) return { error: "Not in lobby" };
+
       let checkDrowsy = await this.pool.one(
         sql`
               select 
