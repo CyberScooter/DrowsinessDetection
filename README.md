@@ -1,5 +1,6 @@
-# Mobile application of Drowsiness Detection 
+# Mobile application of Drowsiness Detection with Precise Location Tracking
 
+### Full-stack drowsy detection alert mobile app that uses closed/drowsy eyes to notify multiple users the longitude and latitude of the drowsy driver.
 ## Explanation for launching code
 
 * Frontend and REST API server with database server has been dockerized into containers
